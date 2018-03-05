@@ -1,0 +1,10 @@
+### Intellij Project Files ###
+/.idea/
+**/out/
+
+### Gradle Project Files ###
+/.gradle/
+**/build/
+
+### Other Files ###
+/keys/
