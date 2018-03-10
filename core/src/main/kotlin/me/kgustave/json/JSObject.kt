@@ -49,6 +49,10 @@ interface JSObject : MutableMap<String, Any?>, JSString {
 
     fun isNull(key: String): Boolean
 
+    fun String.to(item: Any?) {
+        this@JSObject[this] = item
+    }
+
     private inline fun <reified T> castTo(key: String): T {
         if(key !in this) {
             throw JSException("Key '$key' does not correspond to any value.")
@@ -65,5 +69,9 @@ interface JSObject : MutableMap<String, Any?>, JSString {
         }
 
         return value
+    }
+
+    companion object {
+        inline operator fun invoke(block: JSObject.() -> Unit): JSObject = jsonObject(block)
     }
 }

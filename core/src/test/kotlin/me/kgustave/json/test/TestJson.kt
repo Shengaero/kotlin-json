@@ -15,6 +15,7 @@
  */
 package me.kgustave.json.test
 
+import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
 import me.kgustave.json.jsonArray
 import me.kgustave.json.jsonObject
@@ -29,9 +30,9 @@ import kotlin.test.assertNull
  * Creation Date: March 5, 2018
  * Author:        Kaidan Gustave
  *
- * Last Modified: March 5, 2018
- * Changes:       Initial implementation.
- * Version:       1.0.0
+ * Last Modified: March 9, 2018
+ * Changes:       Added companion operator tests.
+ * Version:       1.1.0
  */
 
 @DisplayName("Test JSON")
@@ -134,5 +135,21 @@ class TestJson {
         assertEquals(json.int("age"), 19)
         assertEquals(traits.string("hair_color"), "brown")
         assertEquals(traits.string("eye_color"), "blue")
+    }
+
+    @Test
+    @DisplayName("Test Companion Operator Creation")
+    fun testCompanionCreation() {
+        JSObject {
+            "items" to JSArray[
+                "Hello",
+                123321,
+                null,
+                "Testing",
+                JSObject {
+                    "inner" to "Hello, World!"
+                }
+            ]
+        }
     }
 }

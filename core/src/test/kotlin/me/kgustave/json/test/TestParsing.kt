@@ -28,8 +28,9 @@ import kotlin.test.assertNotNull
  * Creation Date: March 5, 2018
  * Author:        Kaidan Gustave
  *
- * Last Modified: March 5, 2018
- * Changes:       Initial implementation.
+ * Last Modified: March 9, 2018
+ * Changes:       Modified Parse Complex JSON to hold 3 JSObjects
+ *                instead of 2 JSObjects and a null.
  * Version:       1.0.0
  */
 
@@ -72,7 +73,9 @@ class TestParsing {
                 "name": "Kaidan",
                 "age": 19
               },
-              null,
+              {
+                "null": null
+              },
               {
                 "foo": "bar",
                 "baz": "biz",
@@ -92,7 +95,7 @@ class TestParsing {
         assertNotNull(obj.string("name"))
         assertNotNull(obj.int("age"))
 
-        assert(json.isNull(1))
+        assert(json.obj(1).isNull("null"))
     }
 
     @[Test IO]

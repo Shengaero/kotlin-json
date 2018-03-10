@@ -15,8 +15,10 @@
  */
 package me.kgustave.json
 
+import me.kgustave.json.internal.JSObjectImpl
 import me.kgustave.json.internal.buildJsonString
 import me.kgustave.json.internal.syntaxError
+import java.math.BigInteger
 import java.util.*
 
 /**
@@ -60,6 +62,29 @@ abstract class AbstractJSArray(
                     else -> x.syntaxError("Expected a ',' or ']'")
                 }
             }
+        }
+    }
+
+    override fun add(element: Any?): Boolean = list.add(convert(element))
+    override fun add(index: Int, element: Any?) = list.add(index, convert(element))
+    override fun addAll(elements: Collection<Any?>): Boolean = list.addAll(elements.map { convert(it) })
+    override fun addAll(index: Int, elements: Collection<Any?>): Boolean = list.addAll(index, elements.map { convert(it) })
+    override fun set(index: Int, element: Any?): Any? = list.set(index, convert(element))
+
+    private fun convert(value: Any?): Any? {
+        return when(value) {
+            null -> null
+            is String, is Number,
+            is Boolean, is BigInteger,
+            is JSObject, is JSArray -> value
+
+            is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
+            is Pair<*, *> -> jsonObject("${value.first}" to value.second)
+
+            is Collection<*> -> value.toJSArray()
+            is Array<*> -> value.toJSArray()
+
+            else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
         }
     }
 

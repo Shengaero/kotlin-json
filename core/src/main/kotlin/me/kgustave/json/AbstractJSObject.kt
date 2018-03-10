@@ -15,8 +15,10 @@
  */
 package me.kgustave.json
 
+import me.kgustave.json.internal.JSObjectImpl
 import me.kgustave.json.internal.buildJsonString
 import me.kgustave.json.internal.syntaxError
+import java.math.BigInteger
 
 /**
  * Abstract implementation of [JSObject].
@@ -70,6 +72,28 @@ abstract class AbstractJSObject(
 
                 else -> x.syntaxError("Expected a ',' or '}'")
             }
+        }
+    }
+
+    override fun put(key: String, value: Any?): Any? = map.put(key, convert(value))
+    override fun putAll(from: Map<out String, Any?>) {
+        from.forEach { s, u -> put(s, u) }
+    }
+
+    private fun convert(value: Any?): Any? {
+        return when(value) {
+            null -> null
+            is String, is Number,
+            is Boolean, is BigInteger,
+            is JSObject, is JSArray -> value
+
+            is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
+            is Pair<*, *> -> jsonObject("${value.first}" to value.second)
+
+            is Collection<*> -> value.toJSArray()
+            is Array<*> -> value.toJSArray()
+
+            else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
         }
     }
 

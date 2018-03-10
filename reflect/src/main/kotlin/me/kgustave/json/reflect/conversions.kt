@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+@file:JvmName("ConversionsKt")
+package me.kgustave.json.reflect
 
-include 'core'
-include 'reflect'
+import me.kgustave.json.JSObject
+import me.kgustave.json.internal.convertObjectToJSObject
 
+fun json(obj: Any): JSObject {
+    return convertObjectToJSObject(obj)
+}

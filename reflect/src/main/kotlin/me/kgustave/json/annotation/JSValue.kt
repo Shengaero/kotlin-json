@@ -13,8 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+package me.kgustave.json.annotation
 
-include 'core'
-include 'reflect'
-
+/**
+ * @author Kaidan Gustave
+ */
+@MustBeDocumented
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class JSValue

@@ -17,6 +17,7 @@
 package me.kgustave.json
 
 import me.kgustave.json.exceptions.JSException
+import me.kgustave.json.internal.JSArrayImpl
 import me.kgustave.json.internal.JSONDsl
 
 /**
@@ -67,5 +68,11 @@ interface JSArray : MutableList<Any?>, JSString {
         }
 
         return value
+    }
+
+    companion object {
+        operator fun get(vararg elements: Any?): JSArray {
+            return JSArrayImpl(elements)
+        }
     }
 }
