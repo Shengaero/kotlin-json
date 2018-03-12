@@ -80,6 +80,10 @@ abstract class AbstractJSObject(
         from.forEach { s, u -> put(s, u) }
     }
 
+    override fun isNull(key: String): Boolean {
+        return map[key] === null
+    }
+
     private fun convert(value: Any?): Any? {
         return when(value) {
             null -> null

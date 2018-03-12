@@ -16,6 +16,13 @@
 @file:JvmName("Internal_ParsingKt")
 package me.kgustave.json.internal
 
+internal fun removeComments(str: String): String {
+    // Instead of filtering out the commented lines, we simply skip them.
+    // This doesn't save much if any overhead but considering the efficiency
+    // we lose from comments in general, the quickest operation should be taken.
+    return str.split('\n').joinToString("\n") { if(it.trim().startsWith("//")) "" else it }
+}
+
 internal fun stringToValue(str: String): Any? {
     if(str.isEmpty()) {
         return str

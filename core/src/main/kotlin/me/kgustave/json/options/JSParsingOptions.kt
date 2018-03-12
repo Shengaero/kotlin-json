@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json.internal
-
-import me.kgustave.json.AbstractJSArray
-import me.kgustave.json.JSTokener
+package me.kgustave.json.options
 
 /**
- * Internal implementation of [JSArray][me.kgustave.json.JSArray].
+ * Options used for parsing functions.
  *
- * @author  Kaidan Gustave
- * @version 1.0
+ * @author Kaidan Gustave
+ * @since  1.2
  */
-@PublishedApi
-internal class JSArrayImpl: AbstractJSArray {
-    @PublishedApi
-    internal constructor(): super()
-    @PublishedApi
-    internal constructor(array: Array<*>): super(array.toMutableList())
-    @PublishedApi
-    internal constructor(collection: Collection<*>): super(collection.toMutableList())
-    @PublishedApi
-    internal constructor(x: JSTokener): super(x)
+@SinceKotlin("1.2")
+interface JSParsingOptions {
+
+    val comments: Boolean get() = false
+
+    /**
+     * Global default [JSParsingOptions].
+     */
+    companion object : JSParsingOptions {
+        override var comments = false
+    }
 }

@@ -71,6 +71,10 @@ abstract class AbstractJSArray(
     override fun addAll(index: Int, elements: Collection<Any?>): Boolean = list.addAll(index, elements.map { convert(it) })
     override fun set(index: Int, element: Any?): Any? = list.set(index, convert(element))
 
+    override fun isNull(index: Int): Boolean {
+        return list[index] === null
+    }
+
     private fun convert(value: Any?): Any? {
         return when(value) {
             null -> null

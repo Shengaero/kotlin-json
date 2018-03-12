@@ -16,6 +16,7 @@
 package me.kgustave.json.test
 
 import me.kgustave.json.*
+import me.kgustave.json.options.JSParsingOptions
 import org.junit.jupiter.api.*
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -29,14 +30,17 @@ import kotlin.test.assertNotNull
  * Author:        Kaidan Gustave
  *
  * Last Modified: March 9, 2018
- * Changes:       Modified Parse Complex JSON to hold 3 JSObjects
- *                instead of 2 JSObjects and a null.
+ * Changes:       Added new test for configurable parsing.
  * Version:       1.0.0
  */
 
 @DisplayName("Test Parsing")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TestParsing {
+    private val customOptions = object : JSParsingOptions {
+        override val comments = true
+    }
+
     @[Test Parsing]
     @DisplayName("Parse JSObject")
     fun testParseJsonObject() {
@@ -64,7 +68,8 @@ class TestParsing {
         assertEquals(4, json.size)
     }
 
-    @[Test Parsing]
+    @[Test Parsing
+    ]
     @DisplayName("Parse Complex JSON")
     fun testComplexParse() {
         val json = parseJsonArray("""
@@ -98,13 +103,30 @@ class TestParsing {
         assert(json.obj(1).isNull("null"))
     }
 
+    @[Test Parsing]
+    @DisplayName("Parse With Custom Options")
+    fun testParseWithCustomOptions() {
+        val json = parseJsonObject(customOptions, """
+            {
+              // The name of the person
+              "name": "Kaidan",
+
+              // Their age
+              "age": 19
+            }
+        """)
+
+        assertEquals("Kaidan", json.string("name"))
+        assertEquals(19, json.int("age"))
+    }
+
     @[Test IO]
     @DisplayName("Read JSON File From URL")
     fun testReadURL() {
         val json = this::class.java.getResource("/test.json").readJSObject()
 
         assertNotNull(json["github"])
-        val repositories = assertNotNull(json["repositories"] as? JSArray)
+        val repositories = assertNotNull(json.opt<JSArray>("repositories"))
 
         assertEquals(repositories.size, 1)
         assertNotNull(repositories[0] as? JSObject)

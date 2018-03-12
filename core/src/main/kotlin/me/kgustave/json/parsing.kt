@@ -18,14 +18,28 @@ package me.kgustave.json
 
 import me.kgustave.json.internal.JSArrayImpl
 import me.kgustave.json.internal.JSObjectImpl
+import me.kgustave.json.internal.removeComments
+import me.kgustave.json.options.JSParsingOptions
 import org.intellij.lang.annotations.Language
 
 @SinceKotlin("1.2")
+fun parseJsonObject(options: JSParsingOptions, @Language("JSON") json: String): JSObject {
+    val str = if(options.comments) removeComments(json) else json
+    return JSTokener(str).use { t -> JSObjectImpl(t) }
+}
+
+@SinceKotlin("1.2")
 fun parseJsonObject(@Language("JSON") json: String): JSObject {
-    return JSTokener(json).use { t -> JSObjectImpl(t) }
+    return parseJsonObject(JSParsingOptions, json)
+}
+
+@SinceKotlin("1.2")
+fun parseJsonArray(options: JSParsingOptions = JSParsingOptions, @Language("JSON") json: String): JSArray {
+    val str = if(options.comments) removeComments(json) else json
+    return JSTokener(str).use { t -> JSArrayImpl(t) }
 }
 
 @SinceKotlin("1.2")
 fun parseJsonArray(@Language("JSON") json: String): JSArray {
-    return JSTokener(json).use { t -> JSArrayImpl(t) }
+    return parseJsonArray(JSParsingOptions, json)
 }

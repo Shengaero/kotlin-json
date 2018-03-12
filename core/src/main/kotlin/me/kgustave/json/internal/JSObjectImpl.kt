@@ -35,8 +35,4 @@ internal class JSObjectImpl: AbstractJSObject {
     internal constructor(vararg pairs: Pair<String, *>): super(mutableMapOf(*pairs))
     @PublishedApi
     internal constructor(x: JSTokener): super(x)
-
-    override fun isNull(key: String): Boolean {
-        return map[key] === null
-    }
 }
