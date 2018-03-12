@@ -32,7 +32,7 @@ buildscript {
     }
 }
 
-def versionObj = new Version(major: 1, minor: 1, revision: 0)
+def versionObj = new Version(major: 1, minor: 2, revision: 0)
 
 subprojects {
     group 'me.kgustave'
