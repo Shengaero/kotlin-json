@@ -92,7 +92,7 @@ abstract class AbstractJSObject(
             is JSObject, is JSArray -> value
 
             is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
-            is Pair<*, *> -> jsonObject("${value.first}" to value.second)
+            is Pair<*, *> -> jsonObject(Pair("${value.first}", value.second))
 
             is Collection<*> -> value.toJSArray()
             is Array<*> -> value.toJSArray()

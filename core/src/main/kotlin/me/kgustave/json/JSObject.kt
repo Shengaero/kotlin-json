@@ -49,7 +49,7 @@ interface JSObject : MutableMap<String, Any?>, JSString {
 
     fun isNull(key: String): Boolean
 
-    fun String.to(item: Any?) {
+    infix fun String.to(item: Any?) {
         this@JSObject[this] = item
     }
 
