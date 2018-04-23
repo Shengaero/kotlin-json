@@ -15,7 +15,6 @@
  */
 package me.kgustave.json.test
 
-import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
 import me.kgustave.json.jsonArray
 import me.kgustave.json.jsonObject
@@ -30,9 +29,9 @@ import kotlin.test.assertNull
  * Creation Date: March 5, 2018
  * Author:        Kaidan Gustave
  *
- * Last Modified: March 9, 2018
- * Changes:       Added companion operator tests.
- * Version:       1.1.0
+ * Last Modified: April 22, 2018
+ * Changes:       Disabled tests for deprecated operator functions.
+ * Version:       1.3.0
  */
 
 @DisplayName("Test JSON")
@@ -138,18 +137,19 @@ class TestJson {
     }
 
     @Test
+    @Disabled("Companion operator creation is deprecated.")
     @DisplayName("Test Companion Operator Creation")
     fun testCompanionCreation() {
-        JSObject {
-            "items" to JSArray[
-                "Hello",
-                123321,
-                null,
-                "Testing",
-                JSObject {
-                    "inner" to "Hello, World!"
-                }
-            ]
-        }
+//        JSObject {
+//            "items" to JSArray[
+//                "Hello",
+//                123321,
+//                null,
+//                "Testing",
+//                JSObject {
+//                    "inner" to "Hello, World!"
+//                }
+//            ]
+//        }
     }
 }

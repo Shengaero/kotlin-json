@@ -26,5 +26,9 @@ package me.kgustave.json
  */
 @SinceKotlin("1.2")
 interface JSString {
+    /**
+     * Converts a value to a JSON entity as a [String]
+     * rendered with the specified [indent] factor.
+     */
     fun toJsonString(indent: Int): String
 }

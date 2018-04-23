@@ -16,9 +16,6 @@
 @file:Suppress("unused")
 package me.kgustave.json.internal
 
-import me.kgustave.json.AbstractJSObject
-import me.kgustave.json.JSTokener
-
 /**
  * Internal implementation of [JSObject][me.kgustave.json.JSObject].
  *
@@ -27,12 +24,8 @@ import me.kgustave.json.JSTokener
  */
 @PublishedApi
 internal class JSObjectImpl: AbstractJSObject {
-    @PublishedApi
-    internal constructor(): super()
-    @PublishedApi
-    internal constructor(map: Map<String, *>): super(map.toMutableMap())
-    @PublishedApi
-    internal constructor(vararg pairs: Pair<String, *>): super(mutableMapOf(*pairs))
-    @PublishedApi
-    internal constructor(x: JSTokener): super(x)
+    constructor(): super()
+    constructor(map: Map<String, *>): super(map.toMutableMap())
+    constructor(vararg pairs: Pair<String, *>): super(mutableMapOf(*pairs))
+    constructor(x: JSTokener): super(x)
 }

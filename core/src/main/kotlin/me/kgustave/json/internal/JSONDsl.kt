@@ -22,7 +22,6 @@ package me.kgustave.json.internal
  * @since  1.0
  */
 @DslMarker
-@PublishedApi
 @SinceKotlin("1.2")
 @Retention(AnnotationRetention.SOURCE)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)

@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 buildscript {
-    ext.kotlin_version = '1.2.30'
-    ext.junit_version = '1.0.1'
-    ext.jupiter_version = '5.0.1'
-    ext.shadow_version = '2.0.1'
+    ext {
+        kotlin_version = '1.2.31'
+        dokka_version = '0.9.16'
+        junit_version = '1.0.1'
+        jupiter_version = '5.0.1'
+        shadow_version = '2.0.1'
+        versions_version = '0.17.0'
+        bintray_version = '1.7.3'
+        api_guardian_version = '1.0.0'
+    }
 
     repositories {
         jcenter()
@@ -25,25 +31,28 @@ buildscript {
     
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_version"
         classpath "com.github.jengelman.gradle.plugins:shadow:$shadow_version"
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.17.0"
-        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3"
+        classpath "com.github.ben-manes:gradle-versions-plugin:$versions_version"
+        classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
     }
 }
 
-def versionObj = new Version(major: 1, minor: 2, revision: 1)
+def versionObj = [major: 1, minor: 3, revision: 0]
+def versionStr = versionObj.values().join('.')
 
 subprojects {
-    group 'me.kgustave'
-    version "$versionObj"
+    group = 'me.kgustave'
+    version = versionStr
     def moduleName = "$rootProject.name-$project.name"
 
-    apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'kotlin'
     apply plugin: 'idea'
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.bintray'
+    apply plugin: 'org.jetbrains.dokka'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'com.github.ben-manes.versions'
@@ -85,25 +94,65 @@ subprojects {
     }
 
     jar {
-        baseName "$moduleName"
-        version "$versionObj"
-        classifier ''
+        baseName = "$moduleName"
+        version = versionStr
+        classifier = ''
         manifest {
             attributes 'Automatic-Module-Name': "kotlin.json.$project.name",
-                       'Implementation-Version': "$versionObj",
+                       'Implementation-Version': versionStr,
                        'Implementation-Title': "$moduleName"
         }
     }
 
-    task sourcesJar(type: Jar, dependsOn: classes) {
+    dokka {
+        outputFormat = 'html'
+        outputDirectory = "$buildDir/javadoc"
+
+        jdkVersion = 8
+        impliedPlatforms = ['JVM']
+        skipDeprecated = false
+        reportUndocumented = false
+        includeNonPublic = false
+
+        packageOptions {
+            prefix = 'me.kgustave.json.internal'
+            suppress = true
+        }
+    }
+
+    task copySource(type: Copy) {
+        group = 'build'
+        description = 'Copies sources for release to the build directory'
+
+        from { sourceSets.main.allSource }
+        destinationDir = file("$buildDir/sources")
+    }
+
+    task sourcesJar(type: Jar, dependsOn: copySource) {
+        group = 'build'
+        description = 'Generates a sources jar'
+
+        baseName = "$moduleName"
+        version = versionStr
         classifier = 'sources'
-        from "$buildDir/sources"
+        from copySource.destinationDir
+    }
+
+    task dokkaJar(type: Jar, dependsOn: dokka) {
+        group = 'build'
+        description = 'Generates a dokka-javadoc jar'
+
+        baseName = "$moduleName"
+        version = versionStr
+        classifier = 'javadoc'
+        logging.level = LogLevel.QUIET
+        from dokka.outputDirectory
     }
 
     shadowJar {
-        baseName "$moduleName"
-        version "$versionObj"
-        classifier 'withDependencies'
+        baseName = "$moduleName"
+        version = versionStr
+        classifier = 'withDependencies'
     }
 
     build {
@@ -112,13 +161,15 @@ subprojects {
         dependsOn junitPlatformTest
         dependsOn jar
         dependsOn sourcesJar
+        dependsOn dokkaJar
         dependsOn shadowJar
 
         testClasses.mustRunAfter clean
         junitPlatformTest.mustRunAfter testClasses
         jar.mustRunAfter junitPlatformTest
         sourcesJar.mustRunAfter jar
-        shadowJar.mustRunAfter sourcesJar
+        dokkaJar.mustRunAfter sourcesJar
+        shadowJar.mustRunAfter dokkaJar
     }
 
     bintray {
@@ -158,9 +209,7 @@ subprojects {
                     repositoryNode.appendNode('id', 'bintray-kgustave-maven')
                     repositoryNode.appendNode('url', 'https://dl.bintray.com/kgustave/maven')
 
-                    def dependingModules = configurations.compile.filter {
-                        it instanceof ProjectDependency
-                    }
+                    def dependingModules = configurations.compile.filter { it instanceof ProjectDependency }
                     if(dependingModules.size() > 0) {
                         def dependenciesNode = asNode().appendNode('dependencies')
                         dependingModules.each {
@@ -182,18 +231,10 @@ wrapper {
 }
 
 task uploadAll {
-    group 'publishing'
-    description 'Publishes all modules.'
+    group = 'publishing'
+    description = 'Publishes all modules.'
 
     rootProject.childProjects.values().each {
         dependsOn it.getTasksByName('bintrayUpload', true).first()
-    }
-}
-
-class Version {
-    String major, minor, revision
-    @Override
-    String toString() {
-        return "${major}.${minor}.${revision}"
     }
 }

@@ -20,18 +20,18 @@ import me.kgustave.json.*
 import me.kgustave.json.annotation.JSName
 import me.kgustave.json.annotation.JSValue
 import java.math.BigInteger
+import kotlin.reflect.KClass
+import kotlin.reflect.KProperty
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
 internal fun convertObjectToJSObject(obj: Any): JSObject {
-    val jsProperties = (obj::class.memberProperties.filter { it.hasAnnotation<JSValue>() }
-                            .takeIf { it.isNotEmpty() } ?: obj::class.memberProperties)
-        .filter { it.visibility == KVisibility.PUBLIC }
+    val jsProperties = obj::class.jsProperties
     if(jsProperties.isEmpty()) {
         return emptyJSObject()
     }
-    return JSObject {
+    return jsonObject {
         jsProperties.forEach {
             val jsName = it.findAnnotation<JSName>()?.value ?: it.name
             val result = if(it.isConst) it.call() else it.call(obj)
@@ -40,11 +40,17 @@ internal fun convertObjectToJSObject(obj: Any): JSObject {
     }
 }
 
+internal val KClass<*>.jsProperties: List<KProperty<*>> get() {
+    val members = memberProperties
+    val unfiltered = members.filter { it.hasAnnotation<JSValue>() }.takeIf { it.isNotEmpty() } ?: members
+    return unfiltered.filter { it.visibility == KVisibility.PUBLIC }
+}
+
 internal fun convertIndividual(obj: Any?): Any? {
     return when(obj) {
         null -> null
         is String, is Number, is Boolean, is BigInteger, is JSObject, is JSArray -> obj
-        is Pair<*, *> -> JSObject { this[obj.first.toString()] = obj.second.toString() }
+        is Pair<*, *> -> jsonObject { this[obj.first.toString()] = obj.second.toString() }
         is Map<*, *> -> obj.mapKeys { it.toString() }.toJSObject()
         is Collection<*> -> obj.toJSArray()
         is Array<*> -> obj.toJSArray()

@@ -68,8 +68,7 @@ class TestParsing {
         assertEquals(4, json.size)
     }
 
-    @[Test Parsing
-    ]
+    @[Test Parsing]
     @DisplayName("Parse Complex JSON")
     fun testComplexParse() {
         val json = parseJsonArray("""

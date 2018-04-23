@@ -18,6 +18,7 @@ package me.kgustave.json
 
 import me.kgustave.json.internal.JSArrayImpl
 import me.kgustave.json.internal.JSObjectImpl
+import me.kgustave.json.internal.JSTokener
 import java.io.*
 import java.net.URL
 import java.nio.charset.Charset

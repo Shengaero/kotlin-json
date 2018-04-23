@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json
+package me.kgustave.json.internal
 
-import me.kgustave.json.internal.JSObjectImpl
-import me.kgustave.json.internal.buildJsonString
-import me.kgustave.json.internal.syntaxError
+import me.kgustave.json.*
 import java.math.BigInteger
 import java.util.*
 
@@ -33,7 +31,7 @@ import java.util.*
  * @since  1.0
  */
 @SinceKotlin("1.2")
-abstract class AbstractJSArray(
+internal abstract class AbstractJSArray(
     protected val list: MutableList<Any?> = LinkedList()
 ): JSArray, MutableList<Any?> by list {
     constructor(x: JSTokener): this() {
@@ -75,23 +73,25 @@ abstract class AbstractJSArray(
         return list[index] === null
     }
 
-    private fun convert(value: Any?): Any? {
-        return when(value) {
-            null -> null
-            is String, is Number,
-            is Boolean, is BigInteger,
-            is JSObject, is JSArray -> value
-
-            is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
-            is Pair<*, *> -> jsonObject("${value.first}" to value.second)
-
-            is Collection<*> -> value.toJSArray()
-            is Array<*> -> value.toJSArray()
-
-            else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
-        }
-    }
-
     override fun toJsonString(indent: Int): String = buildJsonString(indent, 0)
     override fun toString(): String = toJsonString(0)
+
+    companion object {
+        private fun convert(value: Any?): Any? {
+            return when(value) {
+                null -> null
+                is String, is Number,
+                is Boolean, is BigInteger,
+                is JSObject, is JSArray -> value
+
+                is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
+                is Pair<*, *> -> jsonObject("${value.first}" to value.second)
+
+                is Collection<*> -> value.toJSArray()
+                is Array<*> -> value.toJSArray()
+
+                else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
+            }
+        }
+    }
 }

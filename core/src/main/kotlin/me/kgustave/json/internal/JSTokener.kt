@@ -15,10 +15,10 @@
  */
 @file:Suppress("MemberVisibilityCanBePrivate", "LiftReturnOrAssignment", "Unused")
 
-package me.kgustave.json
+package me.kgustave.json.internal
 
 import me.kgustave.json.exceptions.JSException
-import me.kgustave.json.internal.*
+import me.kgustave.json.options.JSParsingOptions
 import java.io.*
 
 /**
@@ -31,9 +31,35 @@ import java.io.*
  * @since  1.0
  */
 @SinceKotlin("1.2")
-class JSTokener(reader: Reader): AutoCloseable by reader, Iterator<Char> {
-    constructor(inputStream: InputStream): this(InputStreamReader(inputStream))
-    constructor(string: String): this(StringReader(string))
+internal class JSTokener(
+    reader: Reader,
+    private val options: JSParsingOptions = JSParsingOptions
+): AutoCloseable by reader, Iterator<Char> {
+    @Deprecated(
+        message = "Deprecated to maintain binary compatibility.",
+        replaceWith = ReplaceWith("JSTokener(InputStream, JSParsingOptions)"),
+        level = DeprecationLevel.HIDDEN
+    )
+    constructor(reader: Reader): this(reader, JSParsingOptions)
+
+    @Deprecated(
+        message = "Deprecated to maintain binary compatibility.",
+        replaceWith = ReplaceWith("JSTokener(InputStream, JSParsingOptions)"),
+        level = DeprecationLevel.HIDDEN
+    )
+    constructor(inputStream: InputStream): this(InputStreamReader(inputStream), JSParsingOptions)
+
+    @Deprecated(
+        message = "Deprecated to maintain binary compatibility.",
+        replaceWith = ReplaceWith("JSTokener(String, JSParsingOptions)"),
+        level = DeprecationLevel.HIDDEN
+    )
+    constructor(string: String): this(StringReader(string), JSParsingOptions)
+
+    constructor(inputStream: InputStream, options: JSParsingOptions = JSParsingOptions):
+        this(InputStreamReader(inputStream), options)
+    constructor(string: String, options: JSParsingOptions = JSParsingOptions):
+        this(StringReader(string), options)
 
     companion object {
         fun dehexchar(c: Char) = when (c) {
@@ -45,12 +71,13 @@ class JSTokener(reader: Reader): AutoCloseable by reader, Iterator<Char> {
     }
 
     private val reader = if(reader.markSupported()) reader else BufferedReader(reader)
-    private var character = 1L
-    private var eof = false
-    private var index = 0L
-    private var line = 1L
-    private var previous = 0.toChar()
-    private var usePrevious = false
+
+    private var character = 1L          // The character we are at on the current line
+    private var eof = false             // If we are at the end of the file yet
+    private var index = 0L              // The index of the entire reader we are at
+    private var line = 1L               // The line we are on
+    private var previous = 0.toChar()   // The previous character read
+    private var usePrevious = false     // Whether we are using the previous character
 
     val isAtEnd get() = eof && !usePrevious
 
@@ -219,9 +246,9 @@ class JSTokener(reader: Reader): AutoCloseable by reader, Iterator<Char> {
                     line = startLine
                     return c
                 }
-            } while (c != to)
+            } while(c != to)
 
-        } catch (exception: IOException) {
+        } catch(exception: IOException) {
             throw JSException(cause = exception)
         }
 
@@ -241,7 +268,7 @@ class JSTokener(reader: Reader): AutoCloseable by reader, Iterator<Char> {
 
     override operator fun next(): Char {
         var c: Int
-        if (usePrevious) {
+        if(usePrevious) {
             usePrevious = false
             c = previous.toInt()
         } else {
@@ -253,24 +280,28 @@ class JSTokener(reader: Reader): AutoCloseable by reader, Iterator<Char> {
             }
         }
 
+        // Next index
         index += 1
 
         when {
+            // newline
             previous == '\r' -> {
                 line += 1
                 character = (if (c == '\n'.toInt()) 0 else 1).toLong()
             }
-
+            // newline
             c == '\n'.toInt() -> {
                 line += 1
                 character = 0
             }
-
+            // next character
             else -> character += 1
         }
 
+        // set previous
         previous = c.toChar()
 
+        // return previous
         return previous
     }
 

@@ -16,8 +16,15 @@
 package me.kgustave.json.test
 
 import org.junit.jupiter.api.Tag
+import kotlin.annotation.AnnotationRetention.*
+import kotlin.annotation.AnnotationTarget.*
 
-@Target(AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
+@Target(CLASS, FUNCTION)
+@Retention(RUNTIME)
+@Tag("parsing")
+annotation class Parsing
+
+@Target(CLASS, FUNCTION)
+@Retention(RUNTIME)
 @Tag("io")
 annotation class IO

@@ -44,7 +44,6 @@ internal fun stringToValue(str: String): Any? {
                 }
             } else {
                 val long = str.toLong()
-
                 if(str == long.toString()) {
                     return if(long == long.toInt().toLong()) long.toInt() else long
                 }

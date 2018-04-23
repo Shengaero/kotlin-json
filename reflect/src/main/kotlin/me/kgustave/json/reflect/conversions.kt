@@ -19,6 +19,4 @@ package me.kgustave.json.reflect
 import me.kgustave.json.JSObject
 import me.kgustave.json.internal.convertObjectToJSObject
 
-fun json(obj: Any): JSObject {
-    return convertObjectToJSObject(obj)
-}
+fun json(obj: Any): JSObject = convertObjectToJSObject(obj)

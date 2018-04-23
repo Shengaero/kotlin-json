@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json
+@file:Suppress("MemberVisibilityCanBePrivate")
+package me.kgustave.json.internal
 
-import me.kgustave.json.internal.JSObjectImpl
-import me.kgustave.json.internal.buildJsonString
-import me.kgustave.json.internal.syntaxError
+import me.kgustave.json.*
 import java.math.BigInteger
 
 /**
@@ -32,7 +31,7 @@ import java.math.BigInteger
  * @since  1.0
  */
 @SinceKotlin("1.2")
-abstract class AbstractJSObject(
+internal abstract class AbstractJSObject(
     protected val map: MutableMap<String, Any?> = HashMap()
 ): JSObject, MutableMap<String, Any?> by map {
     constructor(x: JSTokener): this() {
@@ -84,23 +83,25 @@ abstract class AbstractJSObject(
         return map[key] === null
     }
 
-    private fun convert(value: Any?): Any? {
-        return when(value) {
-            null -> null
-            is String, is Number,
-            is Boolean, is BigInteger,
-            is JSObject, is JSArray -> value
-
-            is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
-            is Pair<*, *> -> jsonObject(Pair("${value.first}", value.second))
-
-            is Collection<*> -> value.toJSArray()
-            is Array<*> -> value.toJSArray()
-
-            else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
-        }
-    }
-
     override fun toJsonString(indent: Int): String = buildJsonString(indent)
     override fun toString(): String = toJsonString(0)
+
+    companion object {
+        private fun convert(value: Any?): Any? {
+            return when(value) {
+                null -> null
+                is String, is Number,
+                is Boolean, is BigInteger,
+                is JSObject, is JSArray -> value
+
+                is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
+                is Pair<*, *> -> jsonObject(Pair("${value.first}", value.second))
+
+                is Collection<*> -> value.toJSArray()
+                is Array<*> -> value.toJSArray()
+
+                else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
+            }
+        }
+    }
 }

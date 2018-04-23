@@ -15,9 +15,6 @@
  */
 package me.kgustave.json.internal
 
-import me.kgustave.json.AbstractJSArray
-import me.kgustave.json.JSTokener
-
 /**
  * Internal implementation of [JSArray][me.kgustave.json.JSArray].
  *
@@ -26,12 +23,8 @@ import me.kgustave.json.JSTokener
  */
 @PublishedApi
 internal class JSArrayImpl: AbstractJSArray {
-    @PublishedApi
-    internal constructor(): super()
-    @PublishedApi
-    internal constructor(array: Array<*>): super(array.toMutableList())
-    @PublishedApi
-    internal constructor(collection: Collection<*>): super(collection.toMutableList())
-    @PublishedApi
-    internal constructor(x: JSTokener): super(x)
+    constructor(): super()
+    constructor(array: Array<*>): super(array.toMutableList())
+    constructor(collection: Collection<*>): super(collection.toMutableList())
+    constructor(x: JSTokener): super(x)
 }

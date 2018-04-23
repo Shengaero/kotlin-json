@@ -30,12 +30,18 @@ fun emptyJSArray(): JSArray = JSArrayImpl()
 @JSONDsl
 @SinceKotlin("1.2")
 fun jsonObject(vararg pairs: Pair<String, Any?>): JSObject {
+    if(pairs.isEmpty()) {
+        return JSObjectImpl()
+    }
     return JSObjectImpl(pairs.toMap())
 }
 
 @JSONDsl
 @SinceKotlin("1.2")
 fun jsonArray(vararg items: Any?): JSArray {
+    if(items.isEmpty()) {
+        return JSArrayImpl()
+    }
     return JSArrayImpl(items)
 }
 

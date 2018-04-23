@@ -15,6 +15,12 @@
  */
 package me.kgustave.json.options
 
+// TODO Some considerations for options:
+// - String2Long: Convert strings to longs automatically
+// - No Nulls: Whether or not nullable values are allowed when parsing
+// - BigInteger: Support for parsing BigIntegers
+// - Shorts: Support for short values
+
 /**
  * Options used for parsing functions.
  *
@@ -22,14 +28,31 @@ package me.kgustave.json.options
  * @since  1.2
  */
 @SinceKotlin("1.2")
-interface JSParsingOptions {
+interface JSParsingOptions: Cloneable {
+    /**
+     * Whether or not parsing should support comments.
+     *
+     * This will filter all lines starting with `//`,
+     * leaving only lines that don't to be parsed.
+     *
+     * By default this is `false`.
+     */
+    val comments get() = false
 
-    val comments: Boolean get() = false
+    /**
+     * Creates a clone of this [JSParsingOptions].
+     */
+    override fun clone(): JSParsingOptions = Copy(this)
 
     /**
      * Global default [JSParsingOptions].
      */
-    companion object : JSParsingOptions {
-        override var comments = false
+    companion object: JSParsingOptions {
+        override var comments = super.comments
+    }
+
+    // Simple copy class
+    private class Copy(base: JSParsingOptions) : JSParsingOptions {
+        override val comments = base.comments
     }
 }

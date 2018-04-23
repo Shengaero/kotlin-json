@@ -16,7 +16,6 @@
 @file:JvmName("Internal_ExceptionsKt")
 package me.kgustave.json.internal
 
-import me.kgustave.json.JSTokener
 import me.kgustave.json.exceptions.JSException
 import me.kgustave.json.exceptions.JSSyntaxException
 
@@ -26,8 +25,11 @@ internal inline fun checkJson(condition: Boolean, msg: () -> String) {
     }
 }
 
-internal fun JSTokener.syntaxError(message: String, cause: Throwable? = null): Nothing {
-    throw JSSyntaxException("$message $this", cause)
+internal inline fun <T> checkNotNullJson(value: T?, msg: () -> String): T {
+    if(value === null) {
+        throw JSException(msg())
+    }
+    return value
 }
 
 internal inline fun <reified R> tryWrap(block: () -> R): R {
@@ -39,3 +41,7 @@ internal inline fun <reified R> tryWrap(block: () -> R): R {
 }
 
 internal inline fun ignored(block: () -> Unit) = try { block() } catch(ignored: Throwable) {}
+
+internal fun JSTokener.syntaxError(message: String, cause: Throwable? = null): Nothing {
+    throw JSSyntaxException("$message $this", cause)
+}
