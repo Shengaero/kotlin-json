@@ -27,7 +27,6 @@ package me.kgustave.json.options
  * @author Kaidan Gustave
  * @since  1.2
  */
-@SinceKotlin("1.2")
 interface JSParsingOptions: Cloneable {
     /**
      * Whether or not parsing should support comments.

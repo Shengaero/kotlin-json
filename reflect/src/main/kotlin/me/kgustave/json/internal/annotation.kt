@@ -19,6 +19,7 @@ package me.kgustave.json.internal
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.full.findAnnotation
 
-internal inline fun <reified A: Annotation> KAnnotatedElement.hasAnnotation(): Boolean {
+internal inline fun <reified A: Annotation>
+    KAnnotatedElement.hasAnnotation(): Boolean {
     return findAnnotation<A>() !== null
 }

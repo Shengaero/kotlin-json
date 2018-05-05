@@ -15,16 +15,9 @@
  */
 package me.kgustave.json.test
 
-import org.junit.jupiter.api.Tag
-import kotlin.annotation.AnnotationRetention.*
-import kotlin.annotation.AnnotationTarget.*
+import org.junit.jupiter.api.RepeatedTest
 
-@Target(CLASS, FUNCTION)
-@Retention(RUNTIME)
-@Tag("parsing")
-annotation class Parsing
-
-@Target(CLASS, FUNCTION)
-@Retention(RUNTIME)
-@Tag("io")
-annotation class IO
+internal const val TestName = RepeatedTest.DISPLAY_NAME_PLACEHOLDER
+internal const val TrialNumber = RepeatedTest.CURRENT_REPETITION_PLACEHOLDER
+internal const val TotalTrialNumber = RepeatedTest.TOTAL_REPETITIONS_PLACEHOLDER
+internal const val SimpleRepeatedTestName = "$TestName [$TrialNumber/$TotalTrialNumber]"

@@ -21,9 +21,7 @@ package me.kgustave.json.internal
  * @author  Kaidan Gustave
  * @version 1.0
  */
-@PublishedApi
 internal class JSArrayImpl: AbstractJSArray {
-    constructor(): super()
     constructor(array: Array<*>): super(array.toMutableList())
     constructor(collection: Collection<*>): super(collection.toMutableList())
     constructor(x: JSTokener): super(x)

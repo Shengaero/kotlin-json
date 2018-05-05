@@ -6,11 +6,11 @@ JavaScript Object Notation (JSON) for [Kotlin](https://kotlinlang.org/) JVM.
 **Gradle**
 ```groovy
 repositories {
-    maven { url "https://dl.bintray.com/kaidangustave/maven" }
+    jcenter()
 }
 
 dependencies {
-    compile "me.kgustave:kotlin-json-core:1.0.0"
+    compile "me.kgustave:kotlin-json-core:1.5.0"
 }
 ```
 
@@ -18,12 +18,9 @@ dependencies {
 ```xml
 <repositories>
   <repository>
-    <snapshots>
-      <enabled>false</enabled>
-    </snapshots>
-    <id>bintray-kaidangustave-maven</id>
-    <name>bintray</name>
-    <url>https://dl.bintray.com/kaidangustave/maven</url>
+    <id>jcenter</id>
+    <name>jcenter-bintray</name>
+    <url>https://jcenter.bintray.com</url>
   </repository>
 </repositories>
 ```
@@ -33,7 +30,7 @@ dependencies {
   <dependency>
     <groupId>me.kgustave</groupId>
     <artifactId>kotlin-json-core</artifactId>
-    <version>1.0.0</version>
+    <version>1.5.0</version>
     <type>pom</type>
   </dependency>
 </dependencies>

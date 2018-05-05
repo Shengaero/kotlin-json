@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("MemberVisibilityCanBePrivate")
 package me.kgustave.json.internal
 
-import me.kgustave.json.*
-import java.math.BigInteger
-import java.util.*
+import me.kgustave.json.JSArray
 
 /**
  * Abstract implementation of [JSArray].
  *
- * While this is exposed as a public class, it's done
- * only with the intent of covering alternate future
- * implementations of the [JSArray] interface is
- * subject to change like any internal resource.
- *
  * @author Kaidan Gustave
  * @since  1.0
  */
-@SinceKotlin("1.2")
-internal abstract class AbstractJSArray(
-    protected val list: MutableList<Any?> = LinkedList()
-): JSArray, MutableList<Any?> by list {
+internal abstract class AbstractJSArray(protected val list: MutableList<Any?> = ArrayList()): JSArray,
+    MutableList<Any?> by list {
     constructor(x: JSTokener): this() {
         if(x.nextClean() != '[') {
             x.syntaxError("A JSArray text must start with '['")
@@ -63,35 +55,20 @@ internal abstract class AbstractJSArray(
         }
     }
 
-    override fun add(element: Any?): Boolean = list.add(convert(element))
-    override fun add(index: Int, element: Any?) = list.add(index, convert(element))
-    override fun addAll(elements: Collection<Any?>): Boolean = list.addAll(elements.map { convert(it) })
-    override fun addAll(index: Int, elements: Collection<Any?>): Boolean = list.addAll(index, elements.map { convert(it) })
-    override fun set(index: Int, element: Any?): Any? = list.set(index, convert(element))
+    override fun add(element: Any?): Boolean = list.add(convertValue(element))
+    override fun add(index: Int, element: Any?) = list.add(index, convertValue(element))
+    override fun addAll(elements: Collection<Any?>): Boolean = list.addAll(elements.map { convertValue(it) })
+    override fun addAll(index: Int, elements: Collection<Any?>): Boolean = list.addAll(index, elements.map { convertValue(it) })
+    override fun set(index: Int, element: Any?): Any? {
+        if(index == size) add(element) else return list.set(index, element)
+        return null
+    }
 
     override fun isNull(index: Int): Boolean {
-        return list[index] === null
+        if(0 > index || index > size - 1) return true
+        return this[index] === null
     }
 
     override fun toJsonString(indent: Int): String = buildJsonString(indent, 0)
     override fun toString(): String = toJsonString(0)
-
-    companion object {
-        private fun convert(value: Any?): Any? {
-            return when(value) {
-                null -> null
-                is String, is Number,
-                is Boolean, is BigInteger,
-                is JSObject, is JSArray -> value
-
-                is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
-                is Pair<*, *> -> jsonObject("${value.first}" to value.second)
-
-                is Collection<*> -> value.toJSArray()
-                is Array<*> -> value.toJSArray()
-
-                else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
-            }
-        }
-    }
 }

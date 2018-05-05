@@ -17,7 +17,6 @@
 package me.kgustave.json
 
 import me.kgustave.json.exceptions.JSException
-import me.kgustave.json.internal.JSArrayImpl
 import me.kgustave.json.internal.JSONDsl
 import me.kgustave.json.internal.checkNotNullJson
 import kotlin.reflect.KClass
@@ -28,19 +27,11 @@ import kotlin.reflect.KClass
  * JSArrays are [MutableList] sub-interfaces that provide null-safe accessors for
  * various [JSON data types](https://www.w3schools.com/js/js_json_datatypes.asp).
  *
- * Creation of JSArrays is supported through the following functions/accessors:
- *
- * - **[jsonArray]**: Functional block builder or a function call with several pairs.
- * - **[emptyJSArray]**: Creates an new, empty, JSArray.
- * - **[readJSArray]**: Various extension functions for IO operations that involve reading JSArrays from files.
- * - **[parseJsonArray]**: Raw string JSArray parsing.
- *
  * @author Kaidan Gustave
  * @since  1.0
  */
 @JSONDsl
-@SinceKotlin("1.2")
-interface JSArray : MutableList<Any?>, JSString {
+interface JSArray: MutableList<Any?>, JSString {
     /**
      * Gets a [Boolean] at the [index] specified.
      *
@@ -174,17 +165,6 @@ interface JSArray : MutableList<Any?>, JSString {
     }
 
     /**
-     * Gets a value at the [index] specified, or `null` if it is not type [T].
-     *
-     * @param [T] The type of value to get.
-     * @param index The index to get a value at.
-     *
-     * @return A value of type [T], or `null` if no value exists,
-     * or if the value is not the type [T].
-     */
-    fun <T> opt(index: Int): T? = this[index] as? T
-
-    /**
      * Returns `true` if the value at the [index] specified is `null`.
      *
      * @param index The index to check for.
@@ -206,37 +186,12 @@ interface JSArray : MutableList<Any?>, JSString {
         return value
     }
 
-    @Deprecated(
-        message = "JSObject creation through operator convention is " +
-                  "deprecated and is scheduled for privatization by 1.5.0",
-        level = DeprecationLevel.WARNING
-    )
-    companion object {
-        /**
-         * Creates a [JSArray] with an array-like syntax:
-         * ```kotlin
-         * val jsonArray = JSArray["foo", 124, null]
-         * ```
-         *
-         * @param elements The elements to create the [JSArray] with.
-         *
-         * @return A [JSArray] with the provided elements.
-         */
-        @Deprecated(
-            message = "Unnecessary/inferior method for creation of JSObjects.",
-            replaceWith = ReplaceWith(
-                expression = "jsonObject(JSObject.() -> Unit)",
-                imports = ["me.kgustave.json.jsonObject"]
-            ),
-            level = DeprecationLevel.WARNING
-        )
-        operator fun get(vararg elements: Any?): JSArray {
-            return JSArrayImpl(elements)
-        }
-
-
+    private companion object {
         private fun isNotType(index: Int, value: Any, type: KClass<*>): String {
-            return "Value with key '$index' was ${value::class} instead of $type"
+            // Do not use KClass directly in order to avoid
+            //needing kotlin.reflect as a dependency.
+            return "Value with key '$index' was ${value::class.javaPrimitiveType ?: value::class.java} " +
+                   "instead of ${type.javaPrimitiveType ?: type.java}"
         }
     }
 }

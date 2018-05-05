@@ -17,20 +17,13 @@
 package me.kgustave.json.internal
 
 import me.kgustave.json.*
-import java.math.BigInteger
 
 /**
  * Abstract implementation of [JSObject].
  *
- * While this is exposed as a public class, it's done
- * only with the intent of covering alternate future
- * implementations of the [JSObject] interface is
- * subject to change like any internal resource.
- *
  * @author Kaidan Gustave
  * @since  1.0
  */
-@SinceKotlin("1.2")
 internal abstract class AbstractJSObject(
     protected val map: MutableMap<String, Any?> = HashMap()
 ): JSObject, MutableMap<String, Any?> by map {
@@ -74,7 +67,7 @@ internal abstract class AbstractJSObject(
         }
     }
 
-    override fun put(key: String, value: Any?): Any? = map.put(key, convert(value))
+    override fun put(key: String, value: Any?): Any? = map.put(key, convertValue(value))
     override fun putAll(from: Map<out String, Any?>) {
         from.forEach { s, u -> put(s, u) }
     }
@@ -85,23 +78,4 @@ internal abstract class AbstractJSObject(
 
     override fun toJsonString(indent: Int): String = buildJsonString(indent)
     override fun toString(): String = toJsonString(0)
-
-    companion object {
-        private fun convert(value: Any?): Any? {
-            return when(value) {
-                null -> null
-                is String, is Number,
-                is Boolean, is BigInteger,
-                is JSObject, is JSArray -> value
-
-                is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
-                is Pair<*, *> -> jsonObject(Pair("${value.first}", value.second))
-
-                is Collection<*> -> value.toJSArray()
-                is Array<*> -> value.toJSArray()
-
-                else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
-            }
-        }
-    }
 }

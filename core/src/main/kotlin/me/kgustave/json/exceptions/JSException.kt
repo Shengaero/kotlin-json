@@ -30,5 +30,4 @@ package me.kgustave.json.exceptions
  * @author Kaidan Gustave
  * @since  1.0
  */
-@SinceKotlin("1.2")
 open class JSException(message: String? = null, cause: Throwable? = null): RuntimeException(message, cause)

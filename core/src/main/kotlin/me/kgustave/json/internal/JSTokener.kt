@@ -30,7 +30,6 @@ import java.io.*
  * @author Kaidan Gustave
  * @since  1.0
  */
-@SinceKotlin("1.2")
 internal class JSTokener(
     reader: Reader,
     private val options: JSParsingOptions = JSParsingOptions
@@ -98,15 +97,11 @@ internal class JSTokener(
 
     fun next(n: Int): String {
         if(n == 0) return ""
-        val chars = CharArray(n)
-        var pos = 0
-
-        while(pos < n) {
-            chars[pos] = next()
+        val chars = CharArray(n) {
+            val next = next()
             if(isAtEnd) syntaxError("Substring bounds error")
-            pos += 1
+            return@CharArray next
         }
-
         return String(chars)
     }
 
@@ -198,7 +193,7 @@ internal class JSTokener(
         var c = nextClean()
         val string: String
 
-        when (c) {
+        when(c) {
             '"', '\'' -> return nextString(c)
 
             '{' -> {

@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("ConversionsKt")
-package me.kgustave.json.reflect
+package me.kgustave.json.test.extension
 
-import me.kgustave.json.JSObject
-import me.kgustave.json.internal.checkIfReflectionIsInClasspath
-import me.kgustave.json.internal.convertObjectToJSObject
+import org.junit.jupiter.api.TestInstance
 
-fun json(obj: Any): JSObject {
-    checkIfReflectionIsInClasspath()
-    return convertObjectToJSObject(obj)
-}
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+annotation class SingleInstance

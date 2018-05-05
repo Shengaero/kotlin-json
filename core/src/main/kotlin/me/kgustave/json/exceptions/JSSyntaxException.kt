@@ -22,5 +22,4 @@ package me.kgustave.json.exceptions
  * @author Kaidan Gustave
  * @since  1.0
  */
-@SinceKotlin("1.2")
 class JSSyntaxException(message: String? = null, cause: Throwable? = null): JSException(message, cause)

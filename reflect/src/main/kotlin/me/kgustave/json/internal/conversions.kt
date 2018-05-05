@@ -19,23 +19,33 @@ package me.kgustave.json.internal
 import me.kgustave.json.*
 import me.kgustave.json.annotation.JSName
 import me.kgustave.json.annotation.JSValue
-import java.math.BigInteger
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.kotlinFunction
+
+// In order to maintain consistency between modules, we
+//load and store the internal conversion function via reflection
+//and use that instead of just copy-pasting code.
+private lateinit var CONVERT_VALUE_FUN: KFunction<*>
 
 internal fun convertObjectToJSObject(obj: Any): JSObject {
     val jsProperties = obj::class.jsProperties
     if(jsProperties.isEmpty()) {
-        return emptyJSObject()
+        return jsObjectOf()
     }
-    return jsonObject {
+    return JSObject {
         jsProperties.forEach {
             val jsName = it.findAnnotation<JSName>()?.value ?: it.name
             val result = if(it.isConst) it.call() else it.call(obj)
-            this[jsName] = convertIndividual(result)
+            jsName to try { convertIndividual(result) } catch(e: Throwable) {
+                if(result !== null) {
+                    convertObjectToJSObject(result)
+                } else throw IllegalStateException("Could not convert $obj using reflection!")
+            }
         }
     }
 }
@@ -47,14 +57,11 @@ internal val KClass<*>.jsProperties: List<KProperty<*>> get() {
 }
 
 internal fun convertIndividual(obj: Any?): Any? {
-    return when(obj) {
-        null -> null
-        is String, is Number, is Boolean, is BigInteger, is JSObject, is JSArray -> obj
-        is Pair<*, *> -> jsonObject { this[obj.first.toString()] = obj.second.toString() }
-        is Map<*, *> -> obj.mapKeys { it.toString() }.toJSObject()
-        is Collection<*> -> obj.toJSArray()
-        is Array<*> -> obj.toJSArray()
-
-        else -> convertObjectToJSObject(obj)
+    if(!::CONVERT_VALUE_FUN.isInitialized) {
+        val clazz = Class.forName("me.kgustave.json.internal.Internal_ConversionKt")
+        val convertValue = clazz.methods.first { it.name == "convertValue" }
+        CONVERT_VALUE_FUN = convertValue.kotlinFunction!!
     }
+
+    return CONVERT_VALUE_FUN.call(obj)
 }

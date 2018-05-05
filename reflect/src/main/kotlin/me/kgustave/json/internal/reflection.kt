@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("unused")
 package me.kgustave.json.internal
 
-/**
- * Internal implementation of [JSObject][me.kgustave.json.JSObject].
- *
- * @author  Kaidan Gustave
- * @version 1.0
- */
-internal class JSObjectImpl: AbstractJSObject {
-    constructor(): super()
-    constructor(map: Map<String, *>): super(map.toMutableMap())
-    constructor(vararg pairs: Pair<String, *>): super(mutableMapOf(*pairs))
-    constructor(x: JSTokener): super(x)
+private var CHECKED_FOR_KOTLIN_REFLECT = false
+
+// Checks if kotlin-reflect is in the classpath.
+//If it's not, we throw a KotlinReflectionNotSupportedError
+internal fun checkIfReflectionIsInClasspath() {
+    if(CHECKED_FOR_KOTLIN_REFLECT) return
+    try { Class.forName("kotlin.reflect.jvm.internal.KClassImpl") } catch(e: ClassNotFoundException) {
+        throw KotlinReflectionNotSupportedError(
+            "kotlin-reflect not found in classpath! Make sure you have added " +
+            "the proper kotlin reflect dependency!"
+        )
+    }
+    CHECKED_FOR_KOTLIN_REFLECT = true
 }

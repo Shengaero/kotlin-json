@@ -24,7 +24,6 @@ package me.kgustave.json
  * @author Kaidan Gustave
  * @since  1.0
  */
-@SinceKotlin("1.2")
 interface JSString {
     /**
      * Converts a value to a JSON entity as a [String]

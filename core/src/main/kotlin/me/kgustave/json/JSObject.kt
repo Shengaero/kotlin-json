@@ -27,19 +27,11 @@ import kotlin.reflect.KClass
  * JSObjects are [MutableMap] sub-interfaces that provide null-safe accessors for
  * various [JSON data types](https://www.w3schools.com/js/js_json_datatypes.asp).
  *
- * Creation of JSObjects is supported through the following functions/accessors:
- *
- * - **[jsonObject]**: Functional block builder or a function call with several pairs.
- * - **[emptyJSObject]**: Creates an new, empty, JSObject.
- * - **[readJSObject]**: Various extension functions for IO operations that involve reading JSObjects from files.
- * - **[parseJsonObject]**: Raw string JSObject parsing.
- *
  * @author Kaidan Gustave
  * @since  1.0
  */
 @JSONDsl
-@SinceKotlin("1.2")
-interface JSObject : MutableMap<String, Any?>, JSString {
+interface JSObject: MutableMap<String, Any?>, JSString {
     /**
      * Gets the [Boolean] value for the [key] specified.
      *
@@ -165,17 +157,6 @@ interface JSObject : MutableMap<String, Any?>, JSString {
     }
 
     /**
-     * Gets a value with the [key] specified, or `null` if it is not type [T].
-     *
-     * @param [T] The type of value to get.
-     * @param key The key to get a value for.
-     *
-     * @return A value of type [T], or `null` if no value exists,
-     * or if the value is not the type [T].
-     */
-    fun <T> opt(key: String): T? = this[key] as? T
-
-    /**
      * Returns `true` if the value with the [key] specified is `null`.
      *
      * @param key The key to check for.
@@ -192,6 +173,7 @@ interface JSObject : MutableMap<String, Any?>, JSString {
      * @receiver The key.
      * @param item The value.
      */
+    @JSONDsl
     infix fun String.to(item: Any?) {
         this@JSObject[this] = item
     }
@@ -207,36 +189,12 @@ interface JSObject : MutableMap<String, Any?>, JSString {
         return value
     }
 
-    @Deprecated(
-        message = "JSObject creation through operator convention is " +
-                  "deprecated and is scheduled for privatization by 1.5.0",
-        level = DeprecationLevel.WARNING
-    )
-    companion object {
-        /**
-         * Creates a [JSObject] with a closure syntax:
-         * ```kotlin
-         * val jsonObject = JSObject {
-         *     "key" to "value"
-         * }
-         * ```
-         *
-         * @param block The block to create the [JSObject] with.
-         *
-         * @return A [JSObject] with the provided block applied.
-         */
-        @Deprecated(
-            message = "Unnecessary/inferior method for creation of JSObjects.",
-            replaceWith = ReplaceWith(
-                expression = "jsonObject(JSObject.() -> Unit)",
-                imports = ["me.kgustave.json.jsonObject"]
-            ),
-            level = DeprecationLevel.WARNING
-        )
-        inline operator fun invoke(block: JSObject.() -> Unit): JSObject = jsonObject(block)
-
+    private companion object {
         private fun isNotType(key: String, value: Any, type: KClass<*>): String {
-            return "Value with key '$key' was ${value::class} instead of $type"
+            // Do not use KClass directly in order to avoid
+            //needing kotlin.reflect as a dependency.
+            return "Value with key '$key' was ${value::class.javaPrimitiveType ?: value::class.java} " +
+                   "instead of ${type.javaPrimitiveType ?: type.java}"
         }
     }
 }

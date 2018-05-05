@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 @file:JvmName("Internal_RenderingKt")
+@file:Suppress("NOTHING_TO_INLINE")
 package me.kgustave.json.internal
 
 import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
+import java.lang.IllegalStateException
 import java.math.BigInteger
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
-internal fun JSObject.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
+internal fun Map<String, *>.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
     val printPretty = indent > 0
     if(printPretty && level > 0 && newline) {
         appendln()
         indent(indent, level)
     }
-    append("{")
+    append('{')
     var i = 0
     for((k, v) in this@buildJsonString) {
         if(printPretty) {
@@ -58,16 +62,16 @@ internal fun JSObject.buildJsonString(indent: Int, level: Int = 0, newline: Bool
     append('}')
 }
 
-internal fun JSArray.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
+internal fun List<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
     val printPretty = indent > 0
     if(printPretty && level > 0 && newline) {
         appendln()
         indent(indent, level)
     }
 
-    append("[")
+    append('[')
     for((i, v) in this@buildJsonString.withIndex()) {
-        if(v !is JSObject && v !is JSArray && indent > 0) {
+        if(valueCheckToNewline(v, indent)) {
             appendln()
         }
         if(printPretty) {
@@ -95,7 +99,44 @@ internal fun JSArray.buildJsonString(indent: Int, level: Int = 0, newline: Boole
     append(']')
 }
 
-private fun convertValue(value: Any?, indent: Int, level: Int, newline: Boolean): String {
+internal fun Array<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
+    val printPretty = indent > 0
+    if(printPretty && level > 0 && newline) {
+        appendln()
+        indent(indent, level)
+    }
+
+    append('[')
+    for((i, v) in this@buildJsonString.withIndex()) {
+        if(valueCheckToNewline(v, indent)) {
+            appendln()
+        }
+        if(printPretty) {
+            indent(indent, level + 1)
+        }
+
+        val converted = convertValue(v, indent, level, true)
+
+        if(v is String) {
+            renderString(converted)
+        } else {
+            append(converted)
+        }
+
+        if(i != this@buildJsonString.lastIndex) {
+            append(',')
+        }
+    }
+    if(printPretty) {
+        appendln()
+        if(level > 0) {
+            indent(indent, level)
+        }
+    }
+    append(']')
+}
+
+internal fun convertValue(value: Any?, indent: Int, level: Int, newline: Boolean): String {
     return when(value) {
         null -> value.toString()
         is Boolean -> value.toString()
@@ -105,24 +146,38 @@ private fun convertValue(value: Any?, indent: Int, level: Int, newline: Boolean)
         is Float -> value.toDouble().toString()
         is Double -> value.toString()
         is BigInteger -> value.toString()
+        is AtomicInteger -> value.get().toString()
+        is AtomicLong -> value.get().toString()
         is JSObject -> value.buildJsonString(indent, level + 1, newline)
         is JSArray -> value.buildJsonString(indent, level + 1, newline)
-        else -> throw IllegalArgumentException("Cannot convert type: ${value::class}")
+        is Map<*, *> -> {
+            @Suppress("UNCHECKED_CAST")
+            // This might be faster to cast if the typing is correct
+            val realMap = value as? Map<String, *> ?: value.mapKeys { "${it.key}" }
+            return realMap.buildJsonString(indent, level + 1, newline)
+        }
+        is List<*> -> value.buildJsonString(indent, level + 1, newline)
+        is Array<*> -> value.buildJsonString(indent, level + 1, newline)
+        else -> throw IllegalStateException("Cannot convert type: ${value::class}")
     }
 }
 
-private inline fun <reified A: Appendable> A.indent(indent: Int, level: Int): A {
+internal inline fun <reified A: Appendable> A.indent(indent: Int, level: Int): A {
     if(level == 0 || indent == 0)
         return this
-    append("".padStart(level * indent, ' '))
+    append(String(CharArray(level * indent) { ' ' }))
     return this
 }
 
-private inline fun <reified A: Appendable> A.renderString(str: String): A {
+internal inline fun <reified A: Appendable> A.renderString(str: String): A {
     append('"')
     append(escape(str))
     append('"')
     return this
+}
+
+private fun valueCheckToNewline(v: Any?, indent: Int): Boolean {
+    return v !is Map<*, *> && v !is List<*> && v !is Array<*> && indent > 0
 }
 
 private fun escape(str: String): String = buildString {
@@ -148,4 +203,4 @@ private fun escape(str: String): String = buildString {
     }
 }
 
-private fun Int.Companion.toHexString(i: Int): String = Integer.toHexString(i)
+private inline fun Int.Companion.toHexString(i: Int): String = Integer.toHexString(i)
