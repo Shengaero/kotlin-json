@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    compile "me.kgustave:kotlin-json-core:1.5.0"
+    compile "me.kgustave:kotlin-json-core:1.4.0"
 }
 ```
 
@@ -30,7 +30,7 @@ dependencies {
   <dependency>
     <groupId>me.kgustave</groupId>
     <artifactId>kotlin-json-core</artifactId>
-    <version>1.5.0</version>
+    <version>1.4.0</version>
     <type>pom</type>
   </dependency>
 </dependencies>
