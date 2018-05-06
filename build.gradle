@@ -188,6 +188,7 @@ subprojects {
             name = 'kotlin-json'
             licenses = ['Apache-2.0']
             vcsUrl = 'https://github.com/TheMonitorLizard/kotlin-json/'
+            githubRepo = 'https://github.com/TheMonitorLizard/kotlin-json/'
             version {
                 name = project.version
                 released = new Date()
