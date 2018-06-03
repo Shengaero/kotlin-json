@@ -116,6 +116,7 @@ class ReflectionTests {
             checkPerson("Logan", 66, person?.father)
         }
 
+        @Disabled
         @Test fun `Reduce Runtime Significantly With Strategy Caching` () {
             val json = JSObject {
                 "address" to "44 JSON Lane"
