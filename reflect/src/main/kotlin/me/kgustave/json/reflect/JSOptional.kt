@@ -19,6 +19,10 @@ import me.kgustave.json.reflect.internal.JSSerialization
 import kotlin.annotation.AnnotationRetention.*
 import kotlin.annotation.AnnotationTarget.*
 
+/**
+ * @author Kaidan Gustave
+ * @since  1.5
+ */
 @JSSerialization
 @MustBeDocumented
 @Retention(RUNTIME)

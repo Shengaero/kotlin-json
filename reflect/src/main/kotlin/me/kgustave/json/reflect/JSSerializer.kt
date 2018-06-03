@@ -24,7 +24,10 @@ import java.math.BigInteger
 import kotlin.reflect.KClass
 
 /**
+ * Serializer for [JSObjects][JSObject].
+ *
  * @author Kaidan Gustave
+ * @since  1.5
  */
 open class JSSerializer {
     // Remain internal for testing.

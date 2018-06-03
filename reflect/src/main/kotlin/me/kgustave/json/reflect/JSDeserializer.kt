@@ -23,6 +23,8 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.cast
 
 /**
+ * Deserializer for [JSObjects][JSObject].
+ *
  * @author Kaidan Gustave
  * @since  1.5
  */

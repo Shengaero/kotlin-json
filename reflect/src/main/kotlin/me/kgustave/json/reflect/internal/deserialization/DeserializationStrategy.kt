@@ -19,7 +19,6 @@ import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
 import me.kgustave.json.reflect.JSDeserializer
 import me.kgustave.json.reflect.JSName
-import me.kgustave.json.reflect.internal.JSValueType
 import me.kgustave.json.reflect.internal.NotAValue
 import me.kgustave.json.reflect.internal.reflectionError
 import java.lang.reflect.InvocationTargetException
@@ -60,19 +59,19 @@ internal class DeserializationStrategy(
     private val parameterResolvers = parameters.associateBy({ it }) { parameter ->
         val type = parameter.type
         val valueType = when {
-            type.isSubtypeOf(String::class.starProjectedType) -> JSValueType.STRING
-            type.isSubtypeOf(Int::class.starProjectedType) -> JSValueType.INT
-            type.isSubtypeOf(Long::class.starProjectedType) -> JSValueType.LONG
-            type.isSubtypeOf(Float::class.starProjectedType) -> JSValueType.FLOAT
-            type.isSubtypeOf(Double::class.starProjectedType) -> JSValueType.DOUBLE
-            type.isSubtypeOf(stringValueMapType) -> JSValueType.OBJECT
+            type.isSubtypeOf(String::class.starProjectedType) -> DeserializationType.STRING
+            type.isSubtypeOf(Int::class.starProjectedType) -> DeserializationType.INT
+            type.isSubtypeOf(Long::class.starProjectedType) -> DeserializationType.LONG
+            type.isSubtypeOf(Float::class.starProjectedType) -> DeserializationType.FLOAT
+            type.isSubtypeOf(Double::class.starProjectedType) -> DeserializationType.DOUBLE
+            type.isSubtypeOf(stringValueMapType) -> DeserializationType.OBJECT
             type.jvmErasure.let {
                 it == List::class ||
                 it == MutableList::class ||
                 it == ArrayList::class ||
                 it == LinkedList::class ||
                 it.isSubclassOf(JSArray::class)
-            } -> JSValueType.ARRAY
+            } -> DeserializationType.ARRAY
 
             // illegal list subclass
             type.jvmErasure.isSubclassOf(List::class) -> reflectionError {
@@ -80,16 +79,16 @@ internal class DeserializationStrategy(
                 "#${parameter.index} (${parameter.name})."
             }
 
-            else -> JSValueType.OTHER
+            else -> DeserializationType.OTHER
         }
 
         val call = when(valueType) {
-            JSValueType.OTHER -> {
+            DeserializationType.OTHER -> {
                 val klass = type.jvmErasure
                 callFunction { json, str -> json.optObj(str)?.let { deserializer.deserialize(it, klass) } }
             }
 
-            JSValueType.ARRAY -> {
+            DeserializationType.ARRAY -> {
                 if(type.jvmErasure.isSubclassOf(JSArray::class)) valueType.call else {
                     val typeArguments = type.arguments
                     val klass = when(typeArguments.size) {

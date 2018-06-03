@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json.reflect.internal
+package me.kgustave.json.reflect.internal.deserialization
 
 import me.kgustave.json.JSObject
 
 /**
  * @author Kaidan Gustave
+ * @since  1.5
  */
-internal enum class JSValueType(val call: (JSObject, String) -> Any?) {
+internal enum class DeserializationType(val call: (JSObject, String) -> Any?) {
     STRING({ json, key -> json.optString(key) }),
     INT({ json, key -> json.optInt(key) }),
     LONG({ json, key -> json.optLong(key) }),
