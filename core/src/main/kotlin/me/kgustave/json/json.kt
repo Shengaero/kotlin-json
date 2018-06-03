@@ -18,7 +18,6 @@
 package me.kgustave.json
 
 import me.kgustave.json.internal.JSArrayImpl
-import me.kgustave.json.internal.JSONDsl
 import me.kgustave.json.internal.JSObjectImpl
 import me.kgustave.json.internal.JSWriterImpl
 import java.lang.StringBuilder

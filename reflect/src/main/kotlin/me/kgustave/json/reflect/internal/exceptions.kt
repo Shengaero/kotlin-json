@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+@file:JvmName("Internal_ExceptionsKt")
+package me.kgustave.json.reflect.internal
 
-include ':core'
-include ':reflect'
+import me.kgustave.json.reflect.exceptions.JSReflectionException
 
+inline fun reflectionError(message: () -> String): Nothing {
+    throw JSReflectionException(message())
+}

@@ -13,8 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+package me.kgustave.json.reflect.internal
 
-include ':core'
-include ':reflect'
+import me.kgustave.json.JSObject
 
+/**
+ * @author Kaidan Gustave
+ */
+internal enum class JSValueType(val call: (JSObject, String) -> Any?) {
+    STRING({ json, key -> json.optString(key) }),
+    INT({ json, key -> json.optInt(key) }),
+    LONG({ json, key -> json.optLong(key) }),
+    FLOAT({ json, key -> json.optFloat(key) }),
+    DOUBLE({ json, key -> json.optDouble(key) }),
+    OBJECT({ json, key -> json.optObj(key) }),
+    ARRAY({ json, key -> json.optArray(key) }),
+    OTHER({ _, _ -> throw IllegalStateException("This should not be called!") });
+}

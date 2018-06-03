@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+package me.kgustave.json.test
 
-include ':core'
-include ':reflect'
+import me.kgustave.json.reflect.JSOptional
 
+data class Person(
+    val name: String,
+    val age: Int,
+    @JSOptional val mother: Person? = null,
+    @JSOptional val father: Person? = null
+)

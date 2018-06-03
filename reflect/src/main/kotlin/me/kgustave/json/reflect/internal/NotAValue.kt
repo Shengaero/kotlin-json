@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+package me.kgustave.json.reflect.internal
 
-include ':core'
-include ':reflect'
-
+/**
+ * Object instance used to indicate that the returns
+ * should not be included a default value (or no value)
+ * should be used instead.
+ *
+ * @author Kaidan Gustave
+ * @since  1.5
+ */
+internal object NotAValue {
+    override fun toString(): String = "me.kgustave.json.reflect.internal.NotAValue"
+}

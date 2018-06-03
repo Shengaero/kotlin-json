@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json.internal
+package me.kgustave.json.reflect.exceptions
+
+import me.kgustave.json.exceptions.JSException
 
 /**
- * Internal [DslMarker] for JSON closure Domain Specifying Language.
+ * Indicates an error related to reflective operations has occurred.
  *
  * @author Kaidan Gustave
- * @since  1.0
+ * @since  1.5
  */
-@DslMarker
-internal annotation class JSONDsl
+class JSReflectionException(message: String? = null, cause: Throwable? = null): JSException(message, cause)

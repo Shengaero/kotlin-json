@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json.annotation
+package me.kgustave.json.reflect
 
-/**
- * @author Kaidan Gustave
- */
-@MustBeDocumented
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class JSName(val value: String)
+import me.kgustave.json.JSObject
+
+// JSDeserializer
+
+inline fun <reified T: Any> JSDeserializer.deserialize(json: JSObject): T = deserialize(json, T::class)

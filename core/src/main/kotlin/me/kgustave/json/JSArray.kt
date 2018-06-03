@@ -17,8 +17,7 @@
 package me.kgustave.json
 
 import me.kgustave.json.exceptions.JSException
-import me.kgustave.json.internal.JSONDsl
-import me.kgustave.json.internal.checkNotNullJson
+import me.kgustave.json.internal.*
 import kotlin.reflect.KClass
 
 /**
@@ -44,7 +43,7 @@ interface JSArray: MutableList<Any?>, JSString {
      */
     fun boolean(index: Int): Boolean {
         val value = getValueFor(index)
-        return checkNotNullJson(value as? Boolean) { isNotType(index, value, Boolean::class) }
+        return checkNotNullJson(convertBoolean(value)) { isNotType(index, value, Boolean::class) }
     }
 
     /**
@@ -77,9 +76,7 @@ interface JSArray: MutableList<Any?>, JSString {
      */
     fun long(index: Int): Long {
         val value = getValueFor(index)
-        if(value is Number) {
-            (value as? Long ?: (value as? Int)?.toLong())?.let { return it }
-        }
+        convertLong(value)?.let { return it }
         throw JSException(isNotType(index, value, Long::class))
     }
 
@@ -95,7 +92,7 @@ interface JSArray: MutableList<Any?>, JSString {
      */
     fun int(index: Int): Int {
         val value = getValueFor(index)
-        return checkNotNullJson(value as? Int) { isNotType(index, value, Int::class) }
+        return checkNotNullJson(convertInt(value)) { isNotType(index, value, Int::class) }
     }
 
     /**
@@ -113,9 +110,7 @@ interface JSArray: MutableList<Any?>, JSString {
      */
     fun double(index: Int): Double {
         val value = getValueFor(index)
-        if(value is Number) {
-            (value as? Double ?: (value as? Float)?.toDouble())?.let { return it }
-        }
+        convertDouble(value)
         throw JSException(isNotType(index, value, Double::class))
     }
 
@@ -131,7 +126,7 @@ interface JSArray: MutableList<Any?>, JSString {
      */
     fun float(index: Int): Float {
         val value = getValueFor(index)
-        return checkNotNullJson(value as? Float) { isNotType(index, value, Float::class) }
+        return checkNotNullJson(convertFloat(value)) { isNotType(index, value, Float::class) }
     }
 
     /**
@@ -173,17 +168,42 @@ interface JSArray: MutableList<Any?>, JSString {
      */
     fun isNull(index: Int): Boolean
 
+    fun optString(index: Int): String? = convertString(optValueFor(index))
+
+    fun optBoolean(index: Int): Boolean? = convertBoolean(optValueFor(index), fromString = true)
+
+    fun optLong(index: Int): Long? = convertLong(optValueFor(index), fromString = true)
+
+    fun optInt(index: Int): Int? = convertInt(optValueFor(index), fromString = true)
+
+    fun optDouble(index: Int): Double? = convertDouble(optValueFor(index), fromString = true)
+
+    fun optFloat(index: Int): Float? = convertFloat(optValueFor(index), fromString = true)
+
+    fun optObj(index: Int): JSObject? = optValueFor(index) as? JSObject
+
+    fun optArray(index: Int): JSArray? = optValueFor(index) as? JSArray
+
     private fun getValueFor(index: Int): Any {
         if(index < 0 || index >= size) {
-            // Important that we throw an IndexOutOfBoundsException
+            // Important that we throw an ArrayIndexOutOfBoundsException
             //here and not a JSException
-            throw IndexOutOfBoundsException("Index '$index' is outside of indexed bounds.")
+            throw ArrayIndexOutOfBoundsException(index)
         }
         val value = this[index]
         if(value === null) {
             throw JSException("Value at index '$index' was null.")
         }
         return value
+    }
+
+    private fun optValueFor(index: Int): Any? {
+        if(index < 0 || index >= size) {
+            // Make sure to return null so we don't hit
+            //an IndexOutOfBoundsException
+            return null
+        }
+        return this[index]
     }
 
     private companion object {

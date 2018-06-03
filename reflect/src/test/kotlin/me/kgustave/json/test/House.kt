@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("Internal_AnnotationsKt")
-package me.kgustave.json.internal
+package me.kgustave.json.test
 
-import kotlin.reflect.KAnnotatedElement
-import kotlin.reflect.full.findAnnotation
-
-internal inline fun <reified A: Annotation>
-    KAnnotatedElement.hasAnnotation(): Boolean {
-    return findAnnotation<A>() !== null
-}
+data class House(
+    val address: String,
+    val tenants: List<Person>
+)

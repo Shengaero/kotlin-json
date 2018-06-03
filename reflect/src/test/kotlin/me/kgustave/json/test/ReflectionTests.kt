@@ -17,63 +17,152 @@
 
 package me.kgustave.json.test
 
+import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
-import me.kgustave.json.annotation.JSName
-import me.kgustave.json.annotation.JSValue
-import me.kgustave.json.opt
-import me.kgustave.json.reflect.json
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Test
+import me.kgustave.json.reflect.JSDeserializer
+import me.kgustave.json.reflect.JSSerializer
+import me.kgustave.json.reflect.deserialize
+import org.junit.jupiter.api.*
+import kotlin.system.measureTimeMillis
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-@DisplayName("Test Reflection")
+@DisplayName("Reflection Tests")
 class ReflectionTests {
-    @Test fun `Object Creation`() {
-        val obj = object {
-            val name = "Kaidan"
-            val age = 19
-            val traits = object {
-                val hair_color = "Brown"
-                val eye_color = "Blue"
-            }
+    @Nested
+    @DisplayName("Serialization Tests")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    inner class SerializationTests {
+        private val serializer = JSSerializer()
+
+        @BeforeEach fun `Clear Strategies Cache` () {
+            serializer.cache.clearStrategies()
         }
 
-        val json = json(obj)
+        @RepeatedTest(100) fun `Serialize Class Instance to JSON` () {
+            val logan = Person("Logan", 66)
+            val maxine = Person("Maxine", 61)
+            val james = Person("James", 22, mother = maxine, father = logan)
+            val house = House("123 Home Address", listOf(logan, maxine, james))
+            serializer.serialize(house)
+        }
 
-        assertTrue(json.isNotEmpty())
-        val traits = assertNotNull(json.opt<JSObject>("traits"))
-        assertEquals(obj.age, json.int("age"))
-        assertEquals(obj.name, json.string("name"))
-        assertEquals(obj.traits.eye_color, traits.string("eye_color"))
-        assertEquals(obj.traits.hair_color, traits.string("hair_color"))
+        @Test fun `Reduce Runtime Significantly With Strategy Caching` () {
+            val house = House(
+                address = "44 JSON Lane",
+                tenants = listOf(
+                    Person(name = "Annie", age = 25),
+                    Person(name = "Calvin", age = 28),
+                    Person(name = "Marcus", age = 26),
+                    Person(name = "Matthew", age = 24),
+                    Person(name = "Ellen", age = 24)
+                )
+            )
+
+            val t1 = measureTimeMillis { serializer.serialize(house) }
+
+            // clear cache
+            serializer.cache.clearStrategies()
+            serializer.register(House::class)
+            serializer.register(Person::class)
+
+            val t2 = measureTimeMillis { serializer.serialize(house) }
+
+            println("No Pre-Register: $t1 ms")
+            println("With Pre-Register: $t2 ms")
+        }
     }
 
-    @Test fun `Marked Object Creation`() {
-        val json = json(Kaidan)
+    @Nested
+    @DisplayName("Deserialization Tests")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    inner class DeserializationTests {
+        private val deserializer = JSDeserializer()
 
-        assertTrue(json.isNotEmpty())
-        assertEquals(Kaidan.age, json.int("age"))
-        assertEquals(Kaidan.name, json.string("name"))
-    }
+        @BeforeEach fun `Clear Strategies Cache` () {
+            deserializer.cache.clearStrategies()
+        }
 
-    object Kaidan {
-        @JSValue
-        const val name = "Kaidan"
+        @RepeatedTest(100) fun `Deserialize JSON to Class Instance` () {
+            val logan = JSObject {
+                "name" to "Logan"
+                "age" to 66
+            }
 
-        @JSValue
-        const val age = 19
+            val maxine = JSObject {
+                "name" to "Maxine"
+                "age" to 61
+            }
 
-        @JSValue
-        val traits = object {
-            @JSValue
-            @JSName("hair_color")
-            val hairColor = "Brown"
+            val james = JSObject {
+                "name" to "James"
+                "age" to 22
+                "mother" to maxine
+                "father" to logan
+            }
 
-            @JSValue
-            @JSName("eye_color")
-            val eyeColor = "Blue"
+            val json = JSObject {
+                "address" to "123 House Address"
+                "tenants" to JSArray(james, logan, maxine)
+            }
+
+            val house = deserializer.deserialize<House>(json)
+            val person = house.tenants.find { it.name == "James" }
+
+            assertEquals("123 House Address", house.address)
+            checkPerson("James", 22, person)
+            checkPerson("Maxine", 61, person?.mother)
+            checkPerson("Logan", 66, person?.father)
+        }
+
+        @Test fun `Reduce Runtime Significantly With Strategy Caching` () {
+            val json = JSObject {
+                "address" to "44 JSON Lane"
+                "tenants" to JSArray(
+                    JSObject {
+                        "name" to "Annie"
+                        "age" to 25
+                    },
+                    JSObject {
+                        "name" to "Calvin"
+                        "age" to 28
+                    },
+                    JSObject {
+                        "name" to "Marcus"
+                        "age" to 26
+                    },
+                    JSObject {
+                        "name" to "Matthew"
+                        "age" to 24
+                    },
+                    JSObject {
+                        "name" to "Ellen"
+                        "age" to 24
+                    }
+                )
+            }
+
+            val t1 = measureTimeMillis { deserializer.deserialize<House>(json) }
+
+            // clear cache
+            deserializer.cache.clearStrategies()
+
+            deserializer.register(House::class)
+            deserializer.register(Person::class)
+
+            val t2 = measureTimeMillis { deserializer.deserialize<House>(json) }
+
+            println("No Pre-Register: $t1 ms")
+            println("With Pre-Register: $t2 ms")
+
+            assertTrue(t1 > t2, "No noticeable runtime gains!")
+        }
+
+        private fun checkPerson(expectedName: String, expectedAge: Int, person: Person?) {
+            assertNotNull(person)
+            assertEquals(expectedName, person?.name)
+            assertEquals(expectedAge, person?.age)
         }
     }
 }

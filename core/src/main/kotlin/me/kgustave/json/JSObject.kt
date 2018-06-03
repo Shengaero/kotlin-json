@@ -17,8 +17,7 @@
 package me.kgustave.json
 
 import me.kgustave.json.exceptions.JSException
-import me.kgustave.json.internal.JSONDsl
-import me.kgustave.json.internal.checkNotNullJson
+import me.kgustave.json.internal.*
 import kotlin.reflect.KClass
 
 /**
@@ -43,7 +42,7 @@ interface JSObject: MutableMap<String, Any?>, JSString {
      */
     fun boolean(key: String): Boolean {
         val value = getValueFor(key)
-        return checkNotNullJson(value as? Boolean) { isNotType(key, value, Boolean::class) }
+        return checkNotNullJson(convertBoolean(value)) { isNotType(key, value, Boolean::class) }
     }
 
     /**
@@ -74,9 +73,7 @@ interface JSObject: MutableMap<String, Any?>, JSString {
      */
     fun long(key: String): Long {
         val value = getValueFor(key)
-        if(value is Number) {
-            (value as? Long ?: (value as? Int)?.toLong())?.let { return it }
-        }
+        convertLong(value)?.let { return it }
         throw JSException(isNotType(key, value, Long::class))
     }
 
@@ -91,7 +88,7 @@ interface JSObject: MutableMap<String, Any?>, JSString {
      */
     fun int(key: String): Int {
         val value = getValueFor(key)
-        return checkNotNullJson(value as? Int) { isNotType(key, value, Int::class) }
+        return checkNotNullJson(convertInt(value)) { isNotType(key, value, Int::class) }
     }
 
     /**
@@ -108,9 +105,7 @@ interface JSObject: MutableMap<String, Any?>, JSString {
      */
     fun double(key: String): Double {
         val value = getValueFor(key)
-        if(value is Number) {
-            (value as? Double ?: (value as? Float)?.toDouble())?.let { return it }
-        }
+        convertDouble(value)?.let { return it }
         throw JSException(isNotType(key, value, Double::class))
     }
 
@@ -125,7 +120,7 @@ interface JSObject: MutableMap<String, Any?>, JSString {
      */
     fun float(key: String): Float {
         val value = getValueFor(key)
-        return checkNotNullJson(value as? Float) { isNotType(key, value, Float::class) }
+        return checkNotNullJson(convertFloat(value)) { isNotType(key, value, Float::class) }
     }
 
     /**
@@ -155,6 +150,22 @@ interface JSObject: MutableMap<String, Any?>, JSString {
         val value = getValueFor(key)
         return checkNotNullJson(value as? JSArray) { isNotType(key, value, JSArray::class) }
     }
+
+    fun optString(key: String): String? = convertString(this[key])
+
+    fun optBoolean(key: String): Boolean? = convertBoolean(this[key], fromString = true)
+
+    fun optLong(key: String): Long? = convertLong(this[key], fromString = true)
+
+    fun optInt(key: String): Int? = convertInt(this[key], fromString = true)
+
+    fun optDouble(key: String): Double? = convertDouble(this[key], fromString = true)
+
+    fun optFloat(key: String): Float? = convertFloat(this[key], fromString = true)
+
+    fun optObj(key: String): JSObject? = this[key] as? JSObject
+
+    fun optArray(key: String): JSArray? = this[key] as? JSArray
 
     /**
      * Returns `true` if the value with the [key] specified is `null`.

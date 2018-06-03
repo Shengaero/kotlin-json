@@ -23,9 +23,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 import java.util.stream.Stream
 import kotlin.annotation.AnnotationRetention.RUNTIME
-import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.annotation.AnnotationTarget.*
 
-@[Target(FUNCTION) Retention(RUNTIME)]
+@[Target(CLASS, FUNCTION, CONSTRUCTOR) Retention(RUNTIME)]
 @ArgumentsSource(FileProvider::class)
 @ParameterizedTest(name = "{arguments}")
 annotation class FileTest(

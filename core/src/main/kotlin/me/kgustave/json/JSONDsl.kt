@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.kgustave.json.annotation
+package me.kgustave.json
 
 /**
+ * [DslMarker] for JSON closure Domain Specifying Language.
+ *
  * @author Kaidan Gustave
+ * @since  1.0
  */
-@MustBeDocumented
-@Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class JSValue
+@DslMarker
+annotation class JSONDsl

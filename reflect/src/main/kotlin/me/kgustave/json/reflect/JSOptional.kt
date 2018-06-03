@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("ConversionsKt")
 package me.kgustave.json.reflect
 
-import me.kgustave.json.JSObject
-import me.kgustave.json.internal.checkIfReflectionIsInClasspath
-import me.kgustave.json.internal.convertObjectToJSObject
+import me.kgustave.json.reflect.internal.JSSerialization
+import kotlin.annotation.AnnotationRetention.*
+import kotlin.annotation.AnnotationTarget.*
 
-fun json(obj: Any): JSObject {
-    checkIfReflectionIsInClasspath()
-    return convertObjectToJSObject(obj)
-}
+@JSSerialization
+@MustBeDocumented
+@Retention(RUNTIME)
+@Target(PROPERTY)
+annotation class JSOptional
