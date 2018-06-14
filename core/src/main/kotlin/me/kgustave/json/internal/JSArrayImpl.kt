@@ -22,7 +22,7 @@ package me.kgustave.json.internal
  * @version 1.0
  */
 internal class JSArrayImpl: AbstractJSArray {
-    constructor(array: Array<*>): super(array.toMutableList())
-    constructor(collection: Collection<*>): super(collection.toMutableList())
-    constructor(x: JSTokener): super(x)
+    constructor(array: Array<*>): super(array.mapTo(ArrayList(array.size)) { convertValue(it) })
+    constructor(collection: Collection<*>): super(collection.mapTo(ArrayList(collection.size)) { convertValue(it) })
+    constructor(tokener: JSTokener): super(tokener)
 }

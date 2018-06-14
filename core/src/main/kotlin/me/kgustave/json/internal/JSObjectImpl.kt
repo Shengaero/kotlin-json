@@ -26,5 +26,5 @@ internal class JSObjectImpl: AbstractJSObject {
     constructor(): super()
     constructor(map: Map<String, *>): super(map.toMutableMap())
     constructor(vararg pairs: Pair<String, *>): super(mutableMapOf(*pairs))
-    constructor(x: JSTokener): super(x)
+    constructor(tokener: JSTokener): super(tokener)
 }

@@ -16,7 +16,9 @@
 package me.kgustave.json.test
 
 import me.kgustave.json.reflect.JSOptional
+import me.kgustave.json.reflect.JSSerializable
 
+@JSSerializable
 data class Person(
     val name: String,
     val age: Int,

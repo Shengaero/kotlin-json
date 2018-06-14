@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("KotlinJsonParsingKt")
+@file:JvmName("JSONParsingUtil")
 package me.kgustave.json
 
-import me.kgustave.json.internal.JSArrayImpl
-import me.kgustave.json.internal.JSObjectImpl
-import me.kgustave.json.internal.JSTokener
-import me.kgustave.json.internal.removeComments
+import me.kgustave.json.internal.*
 import me.kgustave.json.options.JSParsingOptions
 import org.intellij.lang.annotations.Language
+
+private const val JSON = "JSON"
 
 /**
  * Parses the provided JSON [String] into a [JSObject] using
@@ -34,7 +33,7 @@ import org.intellij.lang.annotations.Language
  *
  * @throws me.kgustave.json.exceptions.JSSyntaxException If the JSON [String] has invalid syntax.
  */
-fun parseJsonObject(options: JSParsingOptions, @Language("JSON") json: String): JSObject {
+fun parseJsonObject(options: JSParsingOptions, @Language(JSON) json: String): JSObject {
     val str = if(options.comments) removeComments(json) else json
     return JSTokener(str).use { t -> JSObjectImpl(t) }
 }
@@ -48,7 +47,7 @@ fun parseJsonObject(options: JSParsingOptions, @Language("JSON") json: String): 
  *
  * @throws me.kgustave.json.exceptions.JSSyntaxException If the JSON [String] has invalid syntax.
  */
-fun parseJsonObject(@Language("JSON") json: String): JSObject {
+fun parseJsonObject(@Language(JSON) json: String): JSObject {
     return parseJsonObject(JSParsingOptions, json)
 }
 
@@ -63,7 +62,7 @@ fun parseJsonObject(@Language("JSON") json: String): JSObject {
  *
  * @throws me.kgustave.json.exceptions.JSSyntaxException If the JSON [String] has invalid syntax.
  */
-fun parseJsonArray(options: JSParsingOptions, @Language("JSON") json: String): JSArray {
+fun parseJsonArray(options: JSParsingOptions, @Language(JSON) json: String): JSArray {
     val str = if(options.comments) removeComments(json) else json
     return JSTokener(str).use { t -> JSArrayImpl(t) }
 }
@@ -77,6 +76,6 @@ fun parseJsonArray(options: JSParsingOptions, @Language("JSON") json: String): J
  *
  * @throws me.kgustave.json.exceptions.JSSyntaxException If the JSON [String] has invalid syntax.
  */
-fun parseJsonArray(@Language("JSON") json: String): JSArray {
+fun parseJsonArray(@Language(JSON) json: String): JSArray {
     return parseJsonArray(JSParsingOptions, json)
 }

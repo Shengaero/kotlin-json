@@ -19,20 +19,21 @@ import me.kgustave.json.JSObject
 import me.kgustave.json.reflect.internal.NotAValue
 import me.kgustave.json.reflect.internal.reflectionError
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 
 internal class ParameterResolver(
-    private val constructor: KFunction<*>,
+    internal val key: String,
+    internal val parameter: KParameter,
     private val optional: Boolean,
     private val nullable: Boolean,
-    private val key: String,
     private val call: (JSObject, String) -> Any?
 ) {
     internal fun resolve(json: JSObject): Any? {
         if(optional && key !in json) return NotAValue
         val value = call(json, key)
         if(value === null) {
-            if(nullable) return null
-            reflectionError { "Could not resolve '$key' value for $constructor!" }
+            if(nullable && key in json) return null
+            reflectionError { "Could not resolve '$key' value for $parameter!" }
         }
         return value
     }

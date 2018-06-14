@@ -21,10 +21,6 @@ import me.kgustave.json.reflect.internal.NotAValue
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.instanceParameter
 
-/**
- * @author Kaidan Gustave
- * @since  1.5
- */
 internal class PropertyHandler(
     private val serializer: JSSerializer,
     private val property: KProperty1<out Any, Any?>,

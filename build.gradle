@@ -16,7 +16,8 @@
 buildscript {
     ext {
         kotlin_version = '1.2.41'
-        dokka_version = '0.9.16'
+        ktor_version = '0.9.3-alpha-3'
+        dokka_version = '0.9.17'
         junit_version = '1.0.1'
         jupiter_version = '5.0.1'
         shadow_version = '2.0.1'
@@ -38,33 +39,74 @@ buildscript {
     }
 }
 
-def versionObj = [major: 1, minor: 5, revision: 0]
+def versionObj = [major: 1, minor: 6, revision: 0]
 def versionStr = versionObj.values().join('.')
 
-subprojects {
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'maven-publish'
+    apply plugin: 'com.jfrog.bintray'
+
     group = 'me.kgustave'
     version = versionStr
+
+    bintray {
+        user = bintrayUsername
+        key = bintrayApiKey
+
+        publications = ['BintrayRelease']
+        publish = true
+
+        pkg {
+            repo = 'maven'
+            name = 'kotlin-json'
+            licenses = ['Apache-2.0']
+            vcsUrl = 'https://github.com/TheMonitorLizard/kotlin-json/'
+            githubRepo = 'https://github.com/TheMonitorLizard/kotlin-json/'
+            version {
+                name = project.version
+                released = new Date()
+            }
+        }
+    }
+}
+
+subprojects {
     def moduleName = "$rootProject.name-$project.name"
 
     apply plugin: 'java-library'
     apply plugin: 'kotlin'
-    apply plugin: 'idea'
-    apply plugin: 'maven-publish'
-    apply plugin: 'com.jfrog.bintray'
     apply plugin: 'org.jetbrains.dokka'
     apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'com.github.ben-manes.versions'
 
+    ext {
+        kotlinJvmTarget = '1.8'
+        repositories {
+            ktorBintray = {
+                maven { url = "https://dl.bintray.com/kotlin/ktor" }
+            }
+        }
+
+        dependencies {
+            kotlin = { String module -> "org.jetbrains.kotlin:kotlin-$module:$kotlin_version" }
+            ktor = { String module -> "io.ktor:ktor-$module:$ktor_version" }
+            junit = { String module -> "org.junit.jupiter:junit-jupiter-$module:$jupiter_version" }
+        }
+    }
+
+    rootProject.subprojects.each { proj ->
+        String functionName = proj.name.split('-').collect { it.capitalize() }.join('').uncapitalize()
+        project.ext."$functionName" = { proj }
+    }
+
     sourceCompatibility = 1.8
 
     sourceSets {
-        test {
-            kotlin.srcDirs += 'src/main/kotlin'
-
-            compileClasspath += main.compileClasspath
-            runtimeClasspath += main.runtimeClasspath
-        }
+        test.kotlin.srcDirs += 'src/test/kotlin'
+        test.compileClasspath += main.compileClasspath
+        test.runtimeClasspath += main.runtimeClasspath
     }
 
     repositories {
@@ -72,28 +114,28 @@ subprojects {
     }
 
     dependencies {
-        compileOnly "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-        compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-        compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+        compileOnly kotlin('stdlib')
+        compileOnly kotlin('stdlib-jdk8')
+        compileOnly kotlin('stdlib-jdk7')
 
-        testCompile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-        testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-        testCompile "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-        testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
-        testCompile "org.junit.jupiter:junit-jupiter-api:$jupiter_version"
-        testCompile "org.junit.jupiter:junit-jupiter-params:$jupiter_version"
-        testRuntime "org.junit.jupiter:junit-jupiter-engine:$jupiter_version"
+        testCompile kotlin('stdlib')
+        testCompile kotlin('stdlib-jdk8')
+        testCompile kotlin('stdlib-jdk7')
+        testCompile kotlin('test-junit')
+        testCompile junit('api')
+        testCompile junit('params')
+        testRuntime junit('engine')
     }
 
     compileKotlin {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = kotlinJvmTarget
         }
     }
 
     compileTestKotlin {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = kotlinJvmTarget
         }
     }
 
@@ -114,14 +156,14 @@ subprojects {
 
         jdkVersion = 8
         impliedPlatforms = ['JVM']
-        skipDeprecated = false
+
+        noStdlibLink = false
+
+        skipDeprecated = true
+        skipEmptyPackages = true
+
         reportUndocumented = false
         includeNonPublic = false
-
-        packageOptions {
-            prefix = 'me.kgustave.json.internal'
-            suppress = true
-        }
     }
 
     task copySource(type: Copy) {
@@ -162,38 +204,16 @@ subprojects {
     build {
         dependsOn clean
         dependsOn testClasses
-        dependsOn junitPlatformTest
         dependsOn jar
         dependsOn sourcesJar
         dependsOn dokkaJar
         dependsOn shadowJar
 
         testClasses.mustRunAfter clean
-        junitPlatformTest.mustRunAfter testClasses
-        jar.mustRunAfter junitPlatformTest
+        jar.mustRunAfter testClasses
         sourcesJar.mustRunAfter jar
         dokkaJar.mustRunAfter sourcesJar
         shadowJar.mustRunAfter dokkaJar
-    }
-
-    bintray {
-        user = bintrayUsername
-        key = bintrayApiKey
-
-        publications = ['BintrayRelease']
-        publish = true
-
-        pkg {
-            repo = 'maven'
-            name = 'kotlin-json'
-            licenses = ['Apache-2.0']
-            vcsUrl = 'https://github.com/TheMonitorLizard/kotlin-json/'
-            githubRepo = 'https://github.com/TheMonitorLizard/kotlin-json/'
-            version {
-                name = project.version
-                released = new Date()
-            }
-        }
     }
 
     publishing {
@@ -242,5 +262,33 @@ task uploadAll {
 
     rootProject.childProjects.values().each {
         dependsOn it.getTasksByName('bintrayUpload', true).first()
+    }
+    dependsOn bintrayUpload
+}
+
+publishing {
+    publications {
+        BintrayRelease(MavenPublication) {
+            groupId = project.group
+            artifactId = 'kotlin-json'
+            version = project.version
+            pom.withXml {
+                def repositoriesNode = asNode().appendNode('repositories')
+                def repositoryNode = repositoriesNode.appendNode('repository')
+
+                repositoryNode.appendNode('name', 'bintray')
+                repositoryNode.appendNode('id', 'bintray-kgustave-maven')
+                repositoryNode.appendNode('url', 'https://dl.bintray.com/kgustave/maven')
+
+                def dependenciesNode = asNode().appendNode('dependencies')
+                def dependencyNode = dependenciesNode.appendNode('dependency')
+                def core = project(":core")
+
+                dependencyNode.appendNode('groupId', core.group)
+                dependencyNode.appendNode('artifactId', 'kotlin-json-core')
+                dependencyNode.appendNode('version', core.version)
+                dependencyNode.appendNode('scope', 'compile')
+            }
+        }
     }
 }

@@ -52,8 +52,7 @@ class JsonTests {
         assertEquals(json.obj("inner").array("boo").count { it === null }, 3)
     }
 
-    @Nested
-    inner class `Json Objects` {
+    @Nested inner class `Json Objects` {
         @Test fun `mapOf Style Creation`() {
             val json = jsObjectOf("foo" to "bar", "baz" to 123.4, "biz" to null)
 
@@ -64,11 +63,11 @@ class JsonTests {
 
         @TypeValidationTest fun `Allows Valid Types`(type: Any?) {
             JSObject { "key" to type }
+            jsArrayOf("key" to type)
+            mapOf("key" to type).toJSObject()
         }
 
-        @Nested
-        @SingleInstance
-        inner class `Mutating Json Objects` {
+        @[Nested SingleInstance] inner class `Mutating Json Objects` {
             private val json = jsObjectOf()
 
             @RepeatedTest(10, name = SimpleRepeatedTestName)
@@ -76,7 +75,7 @@ class JsonTests {
                 val rep = info.currentRepetition
                 json["value$rep"] = rep
 
-                assertEquals(json.size, rep)
+                assertEquals(rep, json.size)
                 for(i in 1..rep)
                     assertTrue(json.containsKey("value$i"))
             }
@@ -86,21 +85,22 @@ class JsonTests {
                 val rep = info.currentRepetition
                 json["value"] = rep
 
-                assertEquals(json.size, 1)
+                assertEquals(1, json.size)
                 assertTrue(json.containsKey("value"))
                 assertTrue(json.containsValue(rep))
                 for(i in (rep - 1) downTo 0)
                     assertFalse(json.containsValue(i))
             }
 
-            @AfterEach fun `Cleanup Repeated Test`(info: RepetitionInfo) {
-                if(info.currentRepetition == info.totalRepetitions) json.clear()
+            @AfterEach fun `Clear JSObject`(info: RepetitionInfo) {
+                if(info.currentRepetition == info.totalRepetitions) {
+                    json.clear()
+                }
             }
         }
     }
 
-    @Nested
-    inner class `Json Arrays` {
+    @Nested inner class `Json Arrays` {
         @Test fun `listOf Style Creation`() {
             val json = jsArrayOf("abc", 123, null, "cba")
 
@@ -116,11 +116,14 @@ class JsonTests {
 
         @TypeValidationTest fun `Allows Valid Types`(type: Any?) {
             JSArray(type)
+            JSArray(1) { type }
+            jsArrayOf(type)
+            setOf(type).toJSArray()
+            listOf(type).toJSArray()
+            arrayOf(type).toJSArray()
         }
 
-        @Nested
-        @SingleInstance
-        inner class `Mutating Json Arrays` {
+        @[Nested SingleInstance] inner class `Mutating Json Arrays` {
             private val json = jsArrayOf()
 
             @RepeatedTest(10, name = SimpleRepeatedTestName)
@@ -128,7 +131,7 @@ class JsonTests {
                 val rep = info.currentRepetition
                 json += (rep - 1)
 
-                assertEquals(json.size, rep)
+                assertEquals(rep, json.size)
                 for(i in 0 until rep) {
                     assertTrue(i <= json.size)
                     assertEquals(i, json[i])
@@ -140,19 +143,20 @@ class JsonTests {
                 val rep = info.currentRepetition
                 json[0] = rep
 
-                assertEquals(json.size, 1)
+                assertEquals(1, json.size)
                 for(i in (rep - 1) downTo 0)
                     assertFalse(i in json)
             }
 
-            @AfterEach fun `Cleanup Repeated Test`(info: RepetitionInfo) {
-                if(info.currentRepetition == info.totalRepetitions) json.clear()
+            @AfterEach fun `Clear JSObject`(info: RepetitionInfo) {
+                if(info.currentRepetition == info.totalRepetitions) {
+                    json.clear()
+                }
             }
         }
     }
 
-    @Nested
-    inner class `Json Writer` {
+    @Nested inner class `Json Writer` {
         @Test fun `Write Json`() {
             JSWriter().obj()
                 .key("foo").value("bar")
@@ -160,14 +164,6 @@ class JsonTests {
         }
 
         @FileTest("/test.json") fun `Write Json To File`(file: File) {
-            if(file.exists()) {
-                // delete and create new
-                check(file.delete())
-                check(file.createNewFile())
-            }
-
-            check(file.exists())
-
             file.writer().use {
                 JSWriter(it).obj {
                     key("foo").obj {
@@ -184,35 +180,143 @@ class JsonTests {
         }
     }
 
-    @Nested
-    @SingleInstance
-    inner class `Type Safe` {
+    @Nested inner class `Json String Rendering` {
+        @RenderTest fun `Render Map`(info: RepetitionInfo) {
+            mapOf("foo" to "bar", "baz" to 1234).toJsonString(info.index)
+        }
+
+        @RenderTest fun `Render List`(info: RepetitionInfo) {
+            listOf("foo", "bar", 42).toJsonString(info.index)
+        }
+
+        @RenderTest fun `Render Array`(info: RepetitionInfo) {
+            arrayOf("hello", "world", null).toJsonString(info.index)
+        }
+
+        @RenderTest fun `Render Map With Inner List`(info: RepetitionInfo) {
+            mapOf(
+                "a" to listOf(1, 2),
+                "b" to listOf(3, 4),
+                "c" to null,
+                "d" to listOf(null, "string", 1234.5)
+            ).toJsonString(info.index)
+        }
+
+        @RenderTest fun `Render List With Inner Map`(info: RepetitionInfo) {
+            listOf(
+                mapOf("key" to "value"),
+                emptyMap(),
+                mapOf(
+                    "null_value" to null,
+                    "number" to 1234,
+                    "decimal" to 44.44
+                )
+            ).toJsonString(info.index)
+        }
+
+        private val RepetitionInfo.index get() = currentRepetition - 1
+    }
+
+    @[Nested SingleInstance] inner class `Type Safe` {
         private val json = JSObject {
-            "null_value" to null
+            "null" to null
             "int" to 5
             "long" to 44L
             "float" to 12.3f
             "double" to 99.4
             "string" to "Hello, World!"
-            "inner_object" to JSObject { "foo" to "bar" }
-            "inner_array" to JSArray(1, 4, 7)
+            "boolean_as_string" to "true"
+            "integer_as_string" to "12345"
+            "floating_point_as_string" to "44.7"
+            "object" to JSObject { "foo" to "bar" }
+            "array" to JSArray(1, 4, 7)
         }
 
-        @Test fun `Opt Value`() {
-            assertNotNull(json.opt<String>("string"))
-            assertNotNull(json.opt<Int>("int"))
-            assertNull(json.opt<Int>("float"))
+        @Test fun `Opt String Value`() {
+            /*
+             * Test opting String.
+             *
+             * Objects and arrays are null when opted as a string.
+             * Everything else is not-null, including null as a value.
+             */
+
+            for(key in json.keys) {
+                val value = json.optString(key)
+                when(key) {
+                    "object", "array" -> assertNull(value)
+                    else -> {
+                        val expected = json[key].toString()
+                        assertNotNull(value)
+                        assertEquals(expected, value)
+                    }
+                }
+            }
+        }
+
+        @Test fun `Opt Numeric Value`() {
+            /*
+             * Test opting Number.
+             *
+             * Opting an int can succeed from an int or integer string value
+             * Opting a long can succeed from a long, int, or integer string value
+             * Opting a float can succeed from a float or float string value
+             * Opting a double can succeed from a double, float, or float string value
+             *
+             * Floating points cannot succeed when the stored value is an integer
+             * Integers cannot succeed when the stored value is a floating point
+             */
+
+            // integers
+
+            assertNull(json.optInt("long"))
+            assertNotNull(json.optInt("integer_as_string"))
+
+            assertNotNull(json.optLong("int"))
+            assertNotNull(json.optLong("integer_as_string"))
+
+            assertNull(json.optInt("float"))
+            assertNull(json.optInt("double"))
+
+            assertNull(json.optLong("float"))
+            assertNull(json.optLong("double"))
+
+            assertNull(json.optInt("string"))
+            assertNull(json.optLong("string"))
+
+            // floating points
+
+            assertNull(json.optFloat("double"))
+            assertNotNull(json.optFloat("floating_point_as_string"))
+
+            assertNotNull(json.optDouble("float"))
+            assertNotNull(json.optDouble("floating_point_as_string"))
+
+            assertNull(json.optFloat("int"))
+            assertNull(json.optFloat("long"))
+
+            assertNull(json.optDouble("int"))
+            assertNull(json.optDouble("long"))
+
+            assertNull(json.optFloat("string"))
+            assertNull(json.optDouble("string"))
         }
 
         @Test fun `Loose Numeric Types`() {
-            try {
-                json.double("float")
-                json.long("int")
-            } catch(e: JSException) {
-                asserter.fail("Failed: ${e.message}")
-            }
-            assertFailsWith<JSException> { json.float("double") }
+            json.double("float")
+            json.long("int")
+
+            assertFailsWith<JSException> { json.long("float") }
+            assertFailsWith<JSException> { json.long("double") }
+            assertFailsWith<JSException> { json.int("float") }
+            assertFailsWith<JSException> { json.int("double") }
+
+            assertFailsWith<JSException> { json.double("int") }
+            assertFailsWith<JSException> { json.double("long") }
+            assertFailsWith<JSException> { json.float("int") }
+            assertFailsWith<JSException> { json.float("long") }
+
             assertFailsWith<JSException> { json.int("long") }
+            assertFailsWith<JSException> { json.float("double") }
         }
 
         @Test fun `Fail When Does Not Exist`() {
@@ -220,15 +324,20 @@ class JsonTests {
         }
 
         @Test fun `Fail When Null`() {
-            assertTrue(json.isNull("null_value"))
-            assertFailsWith<JSException> { json.obj("null_value") }
+            assertTrue(json.isNull("null"))
+            assertFailsWith<JSException> { json.obj("null") }
         }
 
         @Test fun `Fail When Different Type`() {
-            assertFailsWith<JSException> { json.array("inner_object") }
-            assertFailsWith<JSException> { json.obj("inner_array") }
+            assertFailsWith<JSException> { json.string("float") }
+            assertFailsWith<JSException> { json.boolean("boolean_as_string") }
+            assertFailsWith<JSException> { json.array("object") }
+            assertFailsWith<JSException> { json.obj("array") }
         }
     }
+
+    @RepeatedTest(5, name = SimpleRepeatedTestName)
+    private annotation class RenderTest
 
     @ParameterizedTest
     @ArgumentsSource(ValidTypesProvider::class)

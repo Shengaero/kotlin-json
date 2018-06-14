@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("KotlinJsonRenderingKt")
+@file:JvmName("JSONRenderingUtil")
 package me.kgustave.json
 
-import me.kgustave.json.internal.buildJsonString
+import me.kgustave.json.internal.buildJsonArrayString
+import me.kgustave.json.internal.buildJsonObjectString
 
 /**
  * Renders the receiver [Map] to a JSON Object string
@@ -26,17 +27,7 @@ import me.kgustave.json.internal.buildJsonString
  *
  * @return The rendered JSON Object string.
  */
-fun Map<String, *>.toJsonString(indent: Int = 0): String = buildJsonString(indent)
-
-/**
- * Renders the receiver [Array] of [Pairs][Pair] to a
- * JSON Object string with an optional [indent] factor.
- *
- * @param indent The indent factor, default 0.
- *
- * @return The rendered JSON Object string.
- */
-fun Array<out Pair<String, *>>.toJsonString(indent: Int = 0): String = buildJsonString(indent)
+fun Map<String, *>.toJsonString(indent: Int = 0): String = buildJsonObjectString(indent)
 
 /**
  * Renders the receiver [List] to a JSON Array string
@@ -46,7 +37,7 @@ fun Array<out Pair<String, *>>.toJsonString(indent: Int = 0): String = buildJson
  *
  * @return The rendered JSON Array string.
  */
-fun List<*>.toJsonString(indent: Int = 0): String = buildJsonString(indent)
+fun List<*>.toJsonString(indent: Int = 0): String = buildJsonArrayString(indent)
 
 /**
  * Renders the receiver [Array] to a JSON Array string
@@ -56,4 +47,23 @@ fun List<*>.toJsonString(indent: Int = 0): String = buildJsonString(indent)
  *
  * @return The rendered JSON Array string.
  */
-fun Array<*>.toJsonString(indent: Int = 0): String = buildJsonString(indent)
+fun Array<*>.toJsonString(indent: Int = 0): String = buildJsonArrayString(indent)
+
+// Deprecated
+
+/**
+ * Renders the receiver [Array] of [Pairs][Pair] to a
+ * JSON Object string with an optional [indent] factor.
+ *
+ * @param indent The indent factor, default 0.
+ *
+ * @return The rendered JSON Object string.
+ */
+@Deprecated(
+    message = "Uncertain conflict with star projected Array<*> overload of this extension!",
+    replaceWith = ReplaceWith(
+        expression = "mapOf(this).toJsonString(indent)"
+    ),
+    level = DeprecationLevel.WARNING
+)
+fun Array<out Pair<String, *>>.toJsonString(indent: Int = 0): String = buildJsonArrayString(indent)

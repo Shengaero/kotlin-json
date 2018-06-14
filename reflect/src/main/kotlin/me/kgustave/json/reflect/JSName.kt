@@ -21,6 +21,63 @@ import kotlin.annotation.AnnotationRetention.*
 import kotlin.annotation.AnnotationTarget.*
 
 /**
+ * Used to key for a JSON object value explicitly.
+ *
+ * `@JSName` specifies the key used with a [JSObject][me.kgustave.json.JSObject] provided when
+ * serializing/deserializing it into/from a class instance.
+ *
+ * This is mostly useful for values who's names may not represent a Kotlin/Java based naming
+ * scheme for things like web-APIs.
+ *
+ * Take for example the following class definition:
+ *
+ * ```kotlin
+ * data class Order(val id: Long, @JSName("customer_name") val customer: String)
+ * ```
+ *
+ * ## Deserialization
+ *
+ * Normally, constructor parameter values are resolved during deserialization based on their
+ * [parameter name][kotlin.reflect.KParameter.name] as the key retrieved from a `JSObject`.
+ *
+ * Because of this, there must exist a means of specifying the key to use.
+ *
+ * Take for example the following JSON object representing a customer's order on a website:
+ *
+ * ```json
+ * {
+ *   "id": 2252912595123,
+ *   "customer_name": "Mark Lee"
+ * }
+ * ```
+ *
+ * Notice the name of the `customer_name` value. Normally for this to be mapped to a parameter,
+ * the parameter would need to be `customer_name: String`.
+ *
+ * For this to be properly deserialized without a change in the parameter name, you must
+ * apply the `@JSName` with the corresponding value key to use as shown above.
+ *
+ * ## Serialization
+ *
+ * Much like deserialization, `@JSName` can be used to specify the output key name
+ * for a property value to serialize into a `JSObject` output from the serialization
+ * process.
+ *
+ * Using the same example shown above in:
+ *
+ * ```kotlin
+ * fun main(args: Array<String>) {
+ *     val serializer = JSSerializer()
+ *     val order: Order = findAnyOrder()
+ *     val json = serializer.serialize(order)
+ *     println("customer" in json)
+ *     println("customer_name" in json)
+ * }
+ *
+ * // false
+ * // true
+ * ```
+ *
  * @author Kaidan Gustave
  * @since  1.5
  */

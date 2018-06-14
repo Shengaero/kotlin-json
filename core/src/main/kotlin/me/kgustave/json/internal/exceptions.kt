@@ -17,7 +17,6 @@
 package me.kgustave.json.internal
 
 import me.kgustave.json.exceptions.JSException
-import me.kgustave.json.exceptions.JSSyntaxException
 
 internal inline fun checkJson(condition: Boolean, msg: () -> String) {
     if(!condition) {
@@ -41,7 +40,3 @@ internal inline fun <reified R> tryWrap(block: () -> R): R {
 }
 
 internal inline fun ignored(block: () -> Unit) = try { block() } catch(ignored: Throwable) {}
-
-internal fun JSTokener.syntaxError(message: String, cause: Throwable? = null): Nothing {
-    throw JSSyntaxException("$message $this", cause)
-}

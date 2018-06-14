@@ -16,10 +16,7 @@
 package me.kgustave.json.reflect.internal.serialization
 
 import me.kgustave.json.JSObject
-import me.kgustave.json.reflect.JSName
-import me.kgustave.json.reflect.JSOptional
-import me.kgustave.json.reflect.JSSerializer
-import me.kgustave.json.reflect.JSValue
+import me.kgustave.json.reflect.*
 import me.kgustave.json.reflect.internal.reflectionError
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
@@ -28,25 +25,28 @@ import kotlin.reflect.KVisibility.PUBLIC
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
-/**
- * @author Kaidan Gustave
- * @since  1.5
- */
 internal class SerializationCache(private val serializer: JSSerializer) {
-    private val objectStrategies = mutableMapOf<KClass<*>, SerializationStrategy>()
+    private val strategies = mutableMapOf<KClass<*>, SerializationStrategy>()
 
     internal fun register(klass: KClass<*>) {
-        registerInternally(klass)
+        if(klass !in strategies) {
+            registerInternally(klass)
+        }
     }
 
     internal fun destruct(any: Any): JSObject {
         val klass = any::class
         checkClassIsValidToDestruct(klass)
-
-        return objectStrategies.computeIfAbsent(klass) { registerInternally(it) }.destruct(any)
+        return (strategies[klass] ?: registerInternally(klass)).destruct(any)
     }
 
+    internal fun isRegistered(klass: KClass<*>): Boolean = klass in strategies
+
     private fun registerInternally(klass: KClass<*>): SerializationStrategy {
+        check(!serializer.isSafe || klass.annotations.any { it is JSSerializable }) {
+            "$klass is not marked with @JSSerializable!"
+        }
+
         var valid = klass.memberProperties.filter {
             it.visibility == PUBLIC || it.visibility == INTERNAL
         }
@@ -56,8 +56,10 @@ internal class SerializationCache(private val serializer: JSSerializer) {
         val properties = valid.associateBy({ it.findAnnotation<JSName>()?.value ?: it.name }) p@ {
             return@p PropertyHandler(serializer, it, it.findAnnotation<JSOptional>() !== null)
         }
-
-        return SerializationStrategy(serializer = serializer, properties = properties)
+        val strategy = SerializationStrategy(serializer = serializer, properties = properties)
+        check(klass !in strategies) { "Already registered type: $klass" }
+        strategies[klass] = strategy
+        return strategy
     }
 
     private companion object {
@@ -79,6 +81,6 @@ internal class SerializationCache(private val serializer: JSSerializer) {
 
     // Internal for testing
     internal fun clearStrategies() {
-        objectStrategies.clear()
+        strategies.clear()
     }
 }

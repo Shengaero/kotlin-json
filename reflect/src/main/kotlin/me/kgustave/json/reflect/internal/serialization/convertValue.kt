@@ -39,11 +39,13 @@ internal fun JSSerializer.convertValue(value: Any?): Any? {
         is Map<*, *> -> {
             val json = jsObjectOf()
             for((k, v) in value) {
-                json[k.toString()] = convertValue(v)
+                json[k as? String ?: k.toString()] = convertValue(v)
             }
             return json
         }
-        is Pair<*, *> -> return jsObjectOf("${value.first}" to convertValue(value.second))
+        is Pair<*, *> -> return jsObjectOf(
+            (value.first as? String ?: value.first.toString()) to convertValue(value.second)
+        )
 
         is Collection<*> -> return value.mapTo(jsArrayOf()) { convertValue(it) }
         is Array<*> -> return value.mapTo(jsArrayOf()) { convertValue(it) }

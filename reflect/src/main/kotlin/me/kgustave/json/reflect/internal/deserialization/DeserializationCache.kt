@@ -16,6 +16,7 @@
 package me.kgustave.json.reflect.internal.deserialization
 
 import me.kgustave.json.JSObject
+import me.kgustave.json.reflect.JSConstructor
 import me.kgustave.json.reflect.JSDeserializer
 import me.kgustave.json.reflect.internal.reflectionError
 import java.lang.reflect.Modifier
@@ -23,38 +24,32 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility.INTERNAL
 import kotlin.reflect.KVisibility.PUBLIC
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.javaConstructor
 import kotlin.UnsupportedOperationException as UnsupportedException
 
-/**
- * A cache to store strategies for deserialization of
- * [JSON Objects][JSObject] into strong types.
- *
- * @author Kaidan Gustave
- * @since 1.5
- */
 internal class DeserializationCache(private val deserializer: JSDeserializer) {
     private val strategies = mutableMapOf<KClass<*>, DeserializationStrategy>()
 
     internal fun register(klass: KClass<*>) {
-        registerInternally(klass)
+        if(klass !in strategies) {
+            registerInternally(klass)
+        }
     }
 
     internal fun construct(klass: KClass<*>, json: JSObject): Any {
-        return strategies.computeIfAbsent(klass) { registerInternally(klass) }.construct(json)
+        return (strategies[klass] ?: registerInternally(klass)).construct(json)
     }
 
+    internal fun isRegistered(klass: KClass<*>): Boolean = klass in strategies
+
     private fun registerInternally(klass: KClass<*>): DeserializationStrategy {
-        if(klass.isData) return registerData(klass) else throw IllegalArgumentException(
-            "$klass is not a data class! Non data class construction is currently unsupported!"
-        )
+        check(klass !in strategies) { "Already registered: $klass" }
+        return if(klass.isData) registerData(klass) else registerNormally(klass)
     }
 
     private fun registerData(klass: KClass<*>): DeserializationStrategy {
-        require(klass !in strategies) {
-            "Construction strategy for $klass has already been registered!"
-        }
         val primaryConstructor = requireNotNull(klass.primaryConstructor) {
             // This isn't probably possible, but we check and report
             //for the sake of "if it happens"
@@ -66,9 +61,26 @@ internal class DeserializationCache(private val deserializer: JSDeserializer) {
         return strategy
     }
 
+    private fun registerNormally(klass: KClass<*>): DeserializationStrategy {
+        checkClassIsValid(klass)
+        val constructors = findValidConstructors(klass)
+        val target = when {
+            klass.findAnnotation<JSConstructor>() !== null -> klass.primaryConstructor
+            else -> constructors.find { it.findAnnotation<JSConstructor>() !== null } ?: constructors.firstOrNull()
+        }
+        requireNotNull(target) { "Could not find valid target constructor for $klass!" }
+        checkClassIsValidToConstruct(klass, target!!)
+        val strategy = DeserializationStrategy(deserializer, target)
+        strategies[klass] = strategy
+        return strategy
+    }
+
     private companion object {
-        @JvmStatic private fun checkClassIsValidToConstruct(klass: KClass<*>, constructor: KFunction<*>) {
-            // class checks
+        private fun findValidConstructors(klass: KClass<*>): List<KFunction<*>> {
+            return klass.constructors.filter { it.visibility == PUBLIC || it.visibility == INTERNAL }
+        }
+
+        private fun checkClassIsValid(klass: KClass<*>) {
             when {
                 klass.visibility != PUBLIC &&
                 klass.visibility != INTERNAL -> {
@@ -87,8 +99,9 @@ internal class DeserializationCache(private val deserializer: JSDeserializer) {
                 klass.isAbstract ->
                     reflectionError { "Unable to create abstract class instances: $klass!" }
             }
+        }
 
-            // constructor checks
+        private fun checkConstructorIsValid(klass: KClass<*>, constructor: KFunction<*>) {
             when {
                 constructor.visibility != PUBLIC &&
                 constructor.visibility != INTERNAL -> {
@@ -105,6 +118,14 @@ internal class DeserializationCache(private val deserializer: JSDeserializer) {
                     reflectionError { "Unable to create $debugVisibility class instances: $klass!" }
                 }
             }
+        }
+
+        private fun checkClassIsValidToConstruct(klass: KClass<*>, constructor: KFunction<*>) {
+            // class checks
+            checkClassIsValid(klass)
+
+            // constructor checks
+            checkConstructorIsValid(klass, constructor)
         }
     }
 

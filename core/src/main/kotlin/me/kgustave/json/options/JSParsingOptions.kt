@@ -51,7 +51,7 @@ interface JSParsingOptions: Cloneable {
     }
 
     // Simple copy class
-    private class Copy(base: JSParsingOptions) : JSParsingOptions {
+    private class Copy(base: JSParsingOptions): JSParsingOptions {
         override val comments = base.comments
     }
 }

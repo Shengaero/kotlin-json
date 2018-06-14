@@ -13,91 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("MemberVisibilityCanBePrivate", "LiftReturnOrAssignment", "Unused")
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
 
 package me.kgustave.json.internal
 
-import me.kgustave.json.exceptions.JSException
-import me.kgustave.json.options.JSParsingOptions
-import java.io.*
+import me.kgustave.json.exceptions.JSSyntaxException
+import java.io.IOException
+import java.io.Reader
 
-/**
- * Tokener used to read various [InputStreams][InputStream] and [Readers][Reader].
- *
- * This is only exposed publicly for the usage of other modules that are part
- * of the kotlin-json library, and has no use outside of said libraries.
- *
- * @author Kaidan Gustave
- * @since  1.0
- */
-internal class JSTokener(
-    reader: Reader,
-    private val options: JSParsingOptions = JSParsingOptions
-): AutoCloseable by reader, Iterator<Char> {
-    @Deprecated(
-        message = "Deprecated to maintain binary compatibility.",
-        replaceWith = ReplaceWith("JSTokener(InputStream, JSParsingOptions)"),
-        level = DeprecationLevel.HIDDEN
-    )
-    constructor(reader: Reader): this(reader, JSParsingOptions)
+class JSTokener(reader: Reader): AutoCloseable {
+    internal companion object {
+        internal const val NCHAR = 0.toChar()
 
-    @Deprecated(
-        message = "Deprecated to maintain binary compatibility.",
-        replaceWith = ReplaceWith("JSTokener(InputStream, JSParsingOptions)"),
-        level = DeprecationLevel.HIDDEN
-    )
-    constructor(inputStream: InputStream): this(InputStreamReader(inputStream), JSParsingOptions)
-
-    @Deprecated(
-        message = "Deprecated to maintain binary compatibility.",
-        replaceWith = ReplaceWith("JSTokener(String, JSParsingOptions)"),
-        level = DeprecationLevel.HIDDEN
-    )
-    constructor(string: String): this(StringReader(string), JSParsingOptions)
-
-    constructor(inputStream: InputStream, options: JSParsingOptions = JSParsingOptions):
-        this(InputStreamReader(inputStream), options)
-    constructor(string: String, options: JSParsingOptions = JSParsingOptions):
-        this(StringReader(string), options)
-
-    companion object {
-        fun dehexchar(c: Char) = when (c) {
+        private fun dehexchar(c: Char) = when(c) {
             in '0'..'9' -> c - '0'
             in 'A'..'F' -> c.toInt() - ('A'.toInt() - 10)
             in 'a'..'f' -> c.toInt() - ('a'.toInt() - 10)
             else -> -1
         }
+
+        private val readInnerJSObject: JSTokener.() -> Any? = { JSObjectImpl(this) }
+        private val readInnerJSArray: JSTokener.() -> Any? = { JSArrayImpl(this) }
     }
 
-    private val reader = if(reader.markSupported()) reader else BufferedReader(reader)
+    constructor(string: String): this(string.reader())
 
-    private var character = 1L          // The character we are at on the current line
-    private var eof = false             // If we are at the end of the file yet
-    private var index = 0L              // The index of the entire reader we are at
-    private var line = 1L               // The line we are on
-    private var previous = 0.toChar()   // The previous character read
-    private var usePrevious = false     // Whether we are using the previous character
+    private val reader = reader.takeIf { it.markSupported() } ?: reader.buffered()
+    private var index = 0L
+    private var character = 1L
+    private var line = 1L
+    private var eof = false
+    private var prev = NCHAR
+    private var usePrevious = false
 
-    val isAtEnd get() = eof && !usePrevious
+    private val isAtEnd get() = eof && usePrevious
 
-    fun back() {
+    fun prev(): Char {
+        // make sure we're not using prev already
         checkJson(!usePrevious) { "Stepping back two steps is not supported" }
 
         index -= 1
         character -= 1
         usePrevious = true
         eof = false
+        return prev
     }
 
-    fun next(c: Char): Char {
-        val n = next()
-        if(n != c) syntaxError("Expected '$c' and instead saw '$n'")
-        return n
+    @Throws(IOException::class) fun hasNext(): Boolean {
+        next()
+        if(isAtEnd) {
+            return false
+        }
+        prev()
+        return true
     }
 
-    fun next(n: Int): String {
-        if(n == 0) return ""
-        val chars = CharArray(n) {
+    @Throws(IOException::class) fun nextSymbol(): Char {
+        var c: Char
+        do c = next() while(c <= ' ' && c.toInt() != 0)
+        return c
+    }
+
+    @Throws(IOException::class) fun nextText(length: Int): String {
+        require(length >= 0) { "Cannot read text with negative length!" }
+
+        if(length == 0) return ""
+        val chars = CharArray(length) {
             val next = next()
             if(isAtEnd) syntaxError("Substring bounds error")
             return@CharArray next
@@ -105,199 +86,169 @@ internal class JSTokener(
         return String(chars)
     }
 
-    fun nextClean(): Char {
+    @Throws(IOException::class) fun nextString(quote: Char): String = buildString {
         var c: Char
         while(true) {
             c = next()
-            if(c.toInt() == 0 || c > ' ')
-                return c
-        }
-    }
-
-    fun nextString(quote: Char): String {
-        return buildString {
-            var c: Char
-            while(true) {
-                c = next()
-                when(c) {
-                    0.toChar(), '\n', '\r' -> syntaxError("Unterminated string")
-
-                    '\\' -> {
-                        c = next()
-                        when(c) {
-                            'b' -> append('\b')
-                            't' -> append('\t')
-                            'n' -> append('\n')
-                            'f' -> append('\u000C') // Escape for \f in kotlin isn't supported
-                            'r' -> append('\r')
-
-                            'u' -> try {
-                                append(Integer.parseInt(next(4), 16).toChar())
-                            } catch (e: NumberFormatException) {
-                                syntaxError("Illegal escape", e)
-                            }
-
-                            '"', '\'', '\\', '/' -> append(c)
-
-                            else -> syntaxError("Illegal escape")
+            when(c) {
+                NCHAR, '\r', '\n' -> syntaxError("Unterminated string")
+                '\\' -> {
+                    c = next()
+                    when(c) {
+                        'b' -> append('\b')
+                        't' -> append('\t')
+                        'n' -> append('\n')
+                        'f' -> append('\u000C') // Escape for \f in kotlin isn't supported
+                        'r' -> append('\r')
+                        'u' -> try {
+                            append(Integer.parseInt(nextText(4), 16).toChar())
+                        } catch(e: NumberFormatException) {
+                            syntaxError("Illegal escape", e)
                         }
+                        '"', '\'', '\\', '/' -> append(c)
+                        else -> syntaxError("Illegal escape")
                     }
+                }
 
-                    else -> {
-                        if(c == quote)
-                            return@buildString
-                        append(c)
-                    }
+                else -> {
+                    if(c == quote)
+                        return@buildString
+                    append(c)
                 }
             }
         }
     }
 
-    fun nextTo(delimiter: Char): String {
-        val str = buildString {
-            var c: Char
-            while(true) {
-                c = next()
-
-                if(c == delimiter || c.toInt() == 0 || c == '\n' || c == '\r') {
-                    if(c.toInt() != 0)
-                        back()
-                    break
-                }
-
-                append(c)
-            }
-        }
-        return str.trim()
+    @Throws(IOException::class) fun nextKey(): String {
+        val key = nextValue() as? String ?: syntaxError("Key should begin with quotation")
+        val n = nextSymbol()
+        if(n != ':') syntaxError("Expected a ':' after a key")
+        return key
     }
 
-    fun nextTo(delimiters: String): String {
-        val str = buildString {
-            var c: Char
-            while(true) {
-                c = next()
-                if(delimiters.indexOf(c) >= 0 || c.toInt() == 0 || c == '\n' || c == '\r') {
-                    if(c.toInt() != 0) {
-                        back()
-                    }
-                    break
-                }
-                append(c)
-            }
-        }
-
-        return str.trim()
-    }
-
-    fun nextValue(): Any? {
-        var c = nextClean()
-        val string: String
-
+    @Throws(IOException::class) fun nextValue(
+        readInnerObject: JSTokener.() -> Any? = readInnerJSObject,
+        readInnerArray: JSTokener.() -> Any? = readInnerJSArray
+    ): Any? {
+        var c = nextSymbol()
         when(c) {
             '"', '\'' -> return nextString(c)
 
             '{' -> {
-                back()
-                return JSObjectImpl(this)
+                prev()
+                return this.readInnerObject()
             }
 
             '[' -> {
-                back()
-                return JSArrayImpl(this)
+                prev()
+                return this.readInnerArray()
             }
         }
-
-        val s = buildString {
+        val string = buildString {
             while(c >= ' ' && ",:]}/\\\"[{;=#".indexOf(c) < 0) {
                 append(c)
                 c = next()
             }
-        }
-
-        back()
-
-        string = s.trim()
-
+        }.trim()
+        prev()
         if(string.isEmpty()) syntaxError("Missing value")
-
         return stringToValue(string)
     }
 
-    fun skipTo(to: Char): Char {
+    @Throws(IOException::class) fun nextTo(delimiter: Char): String = buildString str@ {
         var c: Char
-        try {
-            val startIndex = index
-            val startCharacter = character
-            val startLine = line
-
-            reader.mark(1000000)
-
-            do {
-                c = this.next()
-                if(c.toInt() == 0) {
-                    reader.reset()
-                    index = startIndex
-                    character = startCharacter
-                    line = startLine
-                    return c
-                }
-            } while(c != to)
-
-        } catch(exception: IOException) {
-            throw JSException(cause = exception)
+        while(true) {
+            c = next()
+            if(c.toInt() == 0) break
+            if(c == delimiter || c == '\n' || c == '\r') {
+                prev()
+                break
+            }
+            append(c)
         }
+    }.trim()
 
-        back()
-        return c
-    }
-
-    override operator fun hasNext(): Boolean {
-        next()
-        if(isAtEnd) {
-            return false
-        } else {
-            back()
-            return true
+    @Throws(IOException::class) fun nextTo(delimiters: String): String = buildString str@ {
+        var c: Char
+        while(true) {
+            c = next()
+            if(c.toInt() == 0) break
+            if(delimiters.indexOf(c) >= 0 || c == '\n' || c == '\r') {
+                prev()
+                break
+            }
+            append(c)
         }
-    }
+    }.trim()
 
-    override operator fun next(): Char {
+    @Throws(IOException::class) fun next(): Char {
         var c: Int
         if(usePrevious) {
             usePrevious = false
-            c = previous.toInt()
+            c = prev.toInt()
         } else {
-            c = tryWrap { reader.read() }
+            c = reader.read()
 
             if(c <= 0) {
                 eof = true
                 c = 0
             }
         }
-
         // Next index
         index += 1
 
         when {
-            // newline
-            previous == '\r' -> {
+        // newline
+            prev == '\r' -> {
                 line += 1
-                character = (if (c == '\n'.toInt()) 0 else 1).toLong()
+                character = (if(c == '\n'.toInt()) 0 else 1).toLong()
             }
-            // newline
+        // newline
             c == '\n'.toInt() -> {
                 line += 1
                 character = 0
             }
-            // next character
+        // next character
             else -> character += 1
         }
-
         // set previous
-        previous = c.toChar()
-
+        prev = c.toChar()
         // return previous
-        return previous
+        return prev
+    }
+
+    @Throws(IOException::class) fun next(c: Char): Char {
+        val n = next()
+        if(n != c) syntaxError("Expected '$c' and instead saw '$n'")
+        return n
+    }
+
+    @Throws(IOException::class) fun skipTo(to: Char): Char {
+        var c: Char
+        val startIndex = index
+        val startCharacter = character
+        val startLine = line
+        reader.mark(1000000)
+        do {
+            c = this.next()
+            if(c.toInt() == 0) {
+                reader.reset() // throws IOException
+                index = startIndex
+                character = startCharacter
+                line = startLine
+                return c
+            }
+        } while(c != to)
+
+        prev()
+        return c
+    }
+
+    fun syntaxError(msg: String, cause: Throwable? = null): Nothing =
+        throw JSSyntaxException("$msg $this", cause)
+
+    override fun close() {
+        reader.close()
     }
 
     override fun toString() = "at $index [character $character line $line]"

@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 @file:JvmName("JSON")
-@file:Suppress("NOTHING_TO_INLINE", "Unused", "FunctionName", "EXTENSION_SHADOWED_BY_MEMBER")
+@file:Suppress("FunctionName", "NOTHING_TO_INLINE")
 package me.kgustave.json
 
 import me.kgustave.json.internal.JSArrayImpl
 import me.kgustave.json.internal.JSObjectImpl
 import me.kgustave.json.internal.JSWriterImpl
+import me.kgustave.json.internal.convertValue
 import java.lang.StringBuilder
+
+// Basic Access
 
 /**
  * Creates a [JSObject] using the provided key-value [pairs].
@@ -29,8 +32,11 @@ import java.lang.StringBuilder
  *
  * @return A new [JSObject].
  */
+@SafeVarargs
 @JvmName("objectOf")
-fun jsObjectOf(vararg pairs: Pair<String, Any?>): JSObject = JSObjectImpl(*pairs)
+fun jsObjectOf(vararg pairs: Pair<String, Any?>): JSObject {
+    return pairs.associateByTo(JSObjectImpl(), { it.first }, { convertValue(it.second) })
+}
 
 /**
  * Creates a [JSArray] using the provided [items].
@@ -39,18 +45,13 @@ fun jsObjectOf(vararg pairs: Pair<String, Any?>): JSObject = JSObjectImpl(*pairs
  *
  * @return A new [JSArray].
  */
+@SafeVarargs
 @JvmName("arrayOf")
-fun jsArrayOf(vararg items: Any?): JSArray = JSArrayImpl(items)
+fun jsArrayOf(vararg items: Any?): JSArray {
+    return JSArrayImpl(items.mapTo(ArrayList(items.size), ::convertValue))
+}
 
-/**
- * Creates a [JSObject] and runs the provided [block] on it.
- *
- * @param block The block to run.
- *
- * @return A new [JSObject].
- */
-@JSONDsl
-inline fun jsonObject(block: JSObject.() -> Unit): JSObject = JSObject(block)
+// DSL
 
 /**
  * Creates a [JSObject] and runs the provided [block] on it.
@@ -93,6 +94,8 @@ inline fun JSArray(size: Int, init: (Int) -> Any?): JSArray {
     return array
 }
 
+// Collections
+
 /**
  * Creates a [JSObject] from the receiver [Map].
  *
@@ -100,7 +103,9 @@ inline fun JSArray(size: Int, init: (Int) -> Any?): JSArray {
  *
  * @return A [JSObject] created from the [Map].
  */
-fun Map<String, *>.toJSObject(): JSObject = JSObjectImpl(this)
+fun Map<String, *>.toJSObject(): JSObject {
+    return this.mapValuesTo(JSObjectImpl()) { containsValue(it.value) }
+}
 
 /**
  * Creates a [JSArray] from the receiver [Collection].
@@ -109,7 +114,11 @@ fun Map<String, *>.toJSObject(): JSObject = JSObjectImpl(this)
  *
  * @return A [JSArray] created from the [Collection].
  */
-fun Collection<*>.toJSArray(): JSArray = JSArrayImpl(this)
+fun Collection<*>.toJSArray(): JSArray {
+    // providing the ArrayList of the size is
+    //almost certainly faster.
+    return JSArrayImpl(this.mapTo(ArrayList(this.size), ::convertValue))
+}
 
 /**
  * Creates a [JSArray] from the receiver [List].
@@ -118,7 +127,9 @@ fun Collection<*>.toJSArray(): JSArray = JSArrayImpl(this)
  *
  * @return A [JSArray] created from the [List].
  */
-fun List<*>.toJSArray(): JSArray = JSArrayImpl(this)
+fun List<*>.toJSArray(): JSArray {
+    return (this as Collection<*>).toJSArray()
+}
 
 /**
  * Creates a [JSArray] from the receiver [Array].
@@ -127,33 +138,9 @@ fun List<*>.toJSArray(): JSArray = JSArrayImpl(this)
  *
  * @return A [JSArray] created from the [Array].
  */
-fun Array<*>.toJSArray(): JSArray = JSArrayImpl(this)
-
-/**
- * Gets a value with the [key] specified, or `null` if it is not type [T].
- *
- * @receiver The [JSObject] to opt for.
- *
- * @param [T] The type of value to get.
- * @param key The key to get a value for.
- *
- * @return A value of type [T], or `null` if no value exists,
- * or if the value is not the type [T].
- */
-inline fun <reified T> JSObject.opt(key: String): T? = this[key] as? T
-
-/**
- * Gets a value at the [index] specified, or `null` if it is not type [T].
- *
- * @receiver The [JSArray] to opt for.
- *
- * @param [T] The type of value to get.
- * @param index The index to get a value at.
- *
- * @return A value of type [T], or `null` if no value exists,
- * or if the value is not the type [T].
- */
-inline fun <reified T> JSArray.opt(index: Int): T? = getOrNull(index) as? T
+fun Array<*>.toJSArray(): JSArray {
+    return jsArrayOf(*this)
+}
 
 // Writer
 
@@ -164,6 +151,8 @@ inline fun <reified T> JSArray.opt(index: Int): T? = getOrNull(index) as? T
  *
  * @return A new [JSWriter].
  */
+@JvmOverloads
+@JvmName("writer")
 fun JSWriter(writer: Appendable = StringBuilder()): JSWriter = JSWriterImpl(writer)
 
 /**
@@ -210,10 +199,63 @@ inline fun JSWriter.array(block: JSWriter.() -> Unit): JSWriter {
 
 // DEPRECATED
 
+/**
+ * Gets a value with the [key] specified, or `null` if it is not type [T].
+ *
+ * @receiver The [JSObject] to opt for.
+ *
+ * @param [T] The type of value to get.
+ * @param key The key to get a value for.
+ *
+ * @return A value of type [T], or `null` if no value exists,
+ * or if the value is not the type [T].
+ */
+@Deprecated(
+    message = "opting values has been replaced with a set of member functions as " +
+              "part of the JSObject interface! If you wish to maintain the same " +
+              "behavior of this extension, consider using \"get(index) as? T\"",
+    replaceWith = ReplaceWith("get(index) as? T")
+)
+inline fun <reified T> JSObject.opt(key: String): T? = this[key] as? T
+
+/**
+ * Gets a value at the [index] specified, or `null` if it is not type [T].
+ *
+ * @receiver The [JSArray] to opt for.
+ *
+ * @param [T] The type of value to get.
+ * @param index The index to get a value at.
+ *
+ * @return A value of type [T], or `null` if no value exists,
+ * or if the value is not the type [T].
+ */
+@Deprecated(
+    message = "opting values has been replaced with a set of member functions as " +
+              "part of the JSArray interface! If you wish to maintain the same " +
+              "behavior of this extension, consider using \"getOrNull(index) as? T\"",
+    replaceWith = ReplaceWith("getOrNull(index) as? T")
+)
+inline fun <reified T> JSArray.opt(index: Int): T? = getOrNull(index) as? T
+
+/**
+ * Creates a [JSObject] and runs the provided [block] on it.
+ *
+ * @param block The block to run.
+ *
+ * @return A new [JSObject].
+ */
+@JSONDsl
+@Deprecated(
+    message = "replaced with the more appropriate function",
+    replaceWith = ReplaceWith("JSObject(block)", "me.kgustave.json.JSObject")
+)
+inline fun jsonObject(block: JSObject.() -> Unit): JSObject = JSObject(block)
+
+@Suppress("unused")
 @Deprecated(
     message = "Semantically this is incorrect, and should be replaced with " +
               "more proper syntax functions. Scheduled for removal in 1.6.0.",
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.HIDDEN
 )
 @JSONDsl
 inline fun jsonArray(block: JSArray.() -> Unit): JSArray {
@@ -222,6 +264,7 @@ inline fun jsonArray(block: JSArray.() -> Unit): JSArray {
     return json
 }
 
+@Suppress("unused")
 @Deprecated(
     message = "Deprecated and replaced with jsObjectOf to match common kotlin naming semantics. " +
               "Removal is scheduled for 1.6.0.",
@@ -229,10 +272,11 @@ inline fun jsonArray(block: JSArray.() -> Unit): JSArray {
         expression = "jsObjectOf(pairs)",
         imports = ["me.kgustave.json.jsObjectOf"]
     ),
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.HIDDEN
 )
 fun jsonObject(vararg pairs: Pair<String, Any?>): JSObject = jsObjectOf(*pairs)
 
+@Suppress("unused")
 @Deprecated(
     message = "Deprecated and replaced with jsArrayOf to match common kotlin naming semantics. " +
               "Removal is scheduled for 1.6.0.",
@@ -240,26 +284,28 @@ fun jsonObject(vararg pairs: Pair<String, Any?>): JSObject = jsObjectOf(*pairs)
         expression = "jsArrayOf(items)",
         imports = ["me.kgustave.json.jsArrayOf"]
     ),
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.HIDDEN
 )
 fun jsonArray(vararg items: Any?): JSArray = jsArrayOf(*items)
 
+@Suppress("unused")
 @Deprecated(
     message = "Optimized jsObjectOf(). Removal is scheduled for 1.6.0.",
     replaceWith = ReplaceWith(
         expression = "jsObjectOf()",
         imports = ["me.kgustave.json.jsObjectOf"]
     ),
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.HIDDEN
 )
 fun emptyJSObject(): JSObject = jsObjectOf()
 
+@Suppress("unused")
 @Deprecated(
     message = "Deprecated in favor of jsArrayOf(). Removal is scheduled for 1.6.0.",
     replaceWith = ReplaceWith(
         expression = "jsArrayOf()",
         imports = ["me.kgustave.json.jsArrayOf"]
     ),
-    level = DeprecationLevel.WARNING
+    level = DeprecationLevel.HIDDEN
 )
 fun emptyJSArray(): JSArray = jsArrayOf()

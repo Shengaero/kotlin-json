@@ -17,10 +17,6 @@ package me.kgustave.json.reflect.internal.deserialization
 
 import me.kgustave.json.JSObject
 
-/**
- * @author Kaidan Gustave
- * @since  1.5
- */
 internal enum class DeserializationType(val call: (JSObject, String) -> Any?) {
     STRING({ json, key -> json.optString(key) }),
     INT({ json, key -> json.optInt(key) }),

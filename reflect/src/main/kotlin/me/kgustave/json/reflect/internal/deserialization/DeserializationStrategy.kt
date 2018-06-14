@@ -30,12 +30,6 @@ import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaConstructor
 import kotlin.reflect.jvm.jvmErasure
 
-/**
- * Functional implementation that stores
- *
- * @author Kaidan Gustave
- * @since  1.5
- */
 internal class DeserializationStrategy(
     private val deserializer: JSDeserializer,
     private val constructor: KFunction<*>
@@ -47,6 +41,7 @@ internal class DeserializationStrategy(
                 invariant(Any::class.createType(nullable = true))
             )
         )
+
         private fun callFunction(block: (JSObject, String) -> Any?) = block
     }
 
@@ -102,6 +97,10 @@ internal class DeserializationStrategy(
                         else -> reflectionError { "List type intention is too complicated to determine!" }
                     }
 
+                    if(klass !== null && !klass.isSubclassOf(JSObject::class)) {
+                        deserializer.register(klass)
+                    }
+
                     callFunction { json, str ->
                         json.optArray(str)?.map {
                             // if klass is null this is star projected list type
@@ -120,10 +119,10 @@ internal class DeserializationStrategy(
         val key = parameter.findAnnotation<JSName>()?.value ?: parameter.name!! // param name shouldn't be null
 
         return@associateBy ParameterResolver(
-            constructor = constructor,
+            key = key,
+            parameter = parameter,
             optional = parameter.isOptional,
             nullable = parameter.type.isMarkedNullable,
-            key = key,
             call = call
         )
     }

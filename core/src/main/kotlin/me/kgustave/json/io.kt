@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:JvmName("KotlinJsonIOKt")
+@file:JvmName("JSONIOUtil")
 @file:Suppress("unused")
 package me.kgustave.json
 
@@ -167,6 +167,8 @@ fun Reader.readJSArray(): JSArray {
  * Reads the receiver [ByteArray] and produces a [JSObject]
  * from it's contents.
  *
+ * @receiver The [ByteArray] to read.
+ *
  * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
  *
  * @return A [JSObject] created from the contents of the [ByteArray].
@@ -183,6 +185,8 @@ fun ByteArray.readJSObject(charset: Charset = Charsets.UTF_8): JSObject {
  * Reads the receiver [ByteArray] and produces a [JSArray]
  * from it's contents.
  *
+ * @receiver The [ByteArray] to read.
+ *
  * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
  *
  * @return A [JSArray] created from the contents of the [ByteArray].
@@ -198,6 +202,8 @@ fun ByteArray.readJSArray(charset: Charset = Charsets.UTF_8): JSArray {
 /**
  * Reads the receiver [ByteArray] with the given [offset]
  * and [length], and produces a [JSObject] from it's contents.
+ *
+ * @receiver The [ByteArray] to read.
  *
  * @param offset The offset.
  * @param length The length.
@@ -217,6 +223,8 @@ fun ByteArray.readJSObject(offset: Int, length: Int, charset: Charset = Charsets
  * Reads the receiver [ByteArray] with the given [offset]
  * and [length], and produces a [JSArray] from it's contents.
  *
+ * @receiver The [ByteArray] to read.
+ *
  * @param offset The offset.
  * @param length The length.
  * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
@@ -231,21 +239,73 @@ fun ByteArray.readJSArray(offset: Int, length: Int, charset: Charset = Charsets.
     return inputStream(offset, length).readJSArray(charset)
 }
 
+/**
+ * Reads the receiver [ByteBuffer] and produces a [JSObject]
+ * from it's contents.
+ *
+ * @receiver The [ByteBuffer] to read.
+ *
+ * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
+ *
+ * @return A [JSObject] created from the contents of the [ByteBuffer].
+ *
+ * @throws java.io.IOException If an IO error occurs while reading the [ByteBuffer].
+ * @throws me.kgustave.json.exceptions.JSSyntaxException If a syntax error is detected while reading.
+ */
 @Throws(IOException::class)
 fun ByteBuffer.readJSObject(charset: Charset = Charsets.UTF_8): JSObject {
     return ByteArray(remaining()).also { this[it] }.readJSObject(charset)
 }
 
+/**
+ * Reads the receiver [ByteBuffer] and produces a [JSArray]
+ * from it's contents.
+ *
+ * @receiver The [ByteBuffer] to read.
+ *
+ * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
+ *
+ * @return A [JSArray] created from the contents of the [ByteBuffer].
+ *
+ * @throws java.io.IOException If an IO error occurs while reading the [ByteBuffer].
+ * @throws me.kgustave.json.exceptions.JSSyntaxException If a syntax error is detected while reading.
+ */
 @Throws(IOException::class)
 fun ByteBuffer.readJSArray(charset: Charset = Charsets.UTF_8): JSArray {
     return ByteArray(remaining()).also { this[it] }.readJSArray(charset)
 }
 
+/**
+ * Reads the receiver [ByteBuffer] with the given [offset]
+ * and [length], and produces a [JSObject] from it's contents.
+ *
+ * @receiver The [ByteBuffer] to read.
+ *
+ * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
+ *
+ * @return A [JSObject] created from the contents of the [ByteBuffer].
+ *
+ * @throws java.io.IOException If an IO error occurs while reading the [ByteBuffer].
+ * @throws me.kgustave.json.exceptions.JSSyntaxException If a syntax error is detected while reading.
+ */
 @Throws(IOException::class)
 fun ByteBuffer.readJSObject(offset: Int, length: Int, charset: Charset = Charsets.UTF_8): JSObject {
     return ByteArray(remaining()).also { this[it, offset, length] }.readJSObject(charset)
 }
 
+/**
+ * Reads the receiver [ByteBuffer] with the given [offset]
+ * and [length], and produces a [JSArray] from it's contents.
+ *
+ * @receiver The [ByteBuffer] to read.
+ *
+ * @param charset The [Charset] to read with (default [UTF-8][Charsets.UTF_8]).
+ *
+ * @return A [JSArray] created from the contents of the [ByteBuffer].
+ *
+ * @throws java.io.IOException If an IO error occurs while reading the [ByteBuffer].
+ * @throws me.kgustave.json.exceptions.JSSyntaxException If a syntax error is detected while reading.
+ */
 @Throws(IOException::class)
 fun ByteBuffer.readJSArray(offset: Int, length: Int, charset: Charset = Charsets.UTF_8): JSArray {
     return ByteArray(remaining()).also { this[it, offset, length] }.readJSArray(charset)

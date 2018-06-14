@@ -24,7 +24,11 @@ import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
-internal fun Map<String, *>.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
+internal fun Map<String, *>.buildJsonObjectString(
+    indent: Int,
+    level: Int = 0,
+    newline: Boolean = false
+): String = buildString {
     val printPretty = indent > 0
     if(printPretty && level > 0 && newline) {
         appendln()
@@ -32,7 +36,7 @@ internal fun Map<String, *>.buildJsonString(indent: Int, level: Int = 0, newline
     }
     append('{')
     var i = 0
-    for((k, v) in this@buildJsonString) {
+    for((k, v) in this@buildJsonObjectString) {
         if(printPretty) {
             appendln()
             indent(indent, level + 1)
@@ -51,7 +55,7 @@ internal fun Map<String, *>.buildJsonString(indent: Int, level: Int = 0, newline
             append(converted)
         }
 
-        if(i != this@buildJsonString.size - 1)
+        if(i != this@buildJsonObjectString.size - 1)
             append(',')
         i++
     }
@@ -62,7 +66,11 @@ internal fun Map<String, *>.buildJsonString(indent: Int, level: Int = 0, newline
     append('}')
 }
 
-internal fun List<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
+internal fun List<*>.buildJsonArrayString(
+    indent: Int,
+    level: Int = 0,
+    newline: Boolean = false
+): String = buildString {
     val printPretty = indent > 0
     if(printPretty && level > 0 && newline) {
         appendln()
@@ -70,7 +78,7 @@ internal fun List<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boole
     }
 
     append('[')
-    for((i, v) in this@buildJsonString.withIndex()) {
+    for((i, v) in this@buildJsonArrayString.withIndex()) {
         if(valueCheckToNewline(v, indent)) {
             appendln()
         }
@@ -86,7 +94,7 @@ internal fun List<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boole
             append(converted)
         }
 
-        if(i != this@buildJsonString.lastIndex) {
+        if(i != this@buildJsonArrayString.lastIndex) {
             append(',')
         }
     }
@@ -99,7 +107,11 @@ internal fun List<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boole
     append(']')
 }
 
-internal fun Array<*>.buildJsonString(indent: Int, level: Int = 0, newline: Boolean = false): String = buildString {
+internal fun Array<*>.buildJsonArrayString(
+    indent: Int,
+    level: Int = 0,
+    newline: Boolean = false
+): String = buildString {
     val printPretty = indent > 0
     if(printPretty && level > 0 && newline) {
         appendln()
@@ -107,7 +119,7 @@ internal fun Array<*>.buildJsonString(indent: Int, level: Int = 0, newline: Bool
     }
 
     append('[')
-    for((i, v) in this@buildJsonString.withIndex()) {
+    for((i, v) in this@buildJsonArrayString.withIndex()) {
         if(valueCheckToNewline(v, indent)) {
             appendln()
         }
@@ -123,7 +135,7 @@ internal fun Array<*>.buildJsonString(indent: Int, level: Int = 0, newline: Bool
             append(converted)
         }
 
-        if(i != this@buildJsonString.lastIndex) {
+        if(i != this@buildJsonArrayString.lastIndex) {
             append(',')
         }
     }
@@ -134,6 +146,13 @@ internal fun Array<*>.buildJsonString(indent: Int, level: Int = 0, newline: Bool
         }
     }
     append(']')
+}
+
+internal inline fun <reified A: Appendable> A.renderString(str: String): A {
+    append('"')
+    append(escape(str))
+    append('"')
+    return this
 }
 
 internal fun convertValue(value: Any?, indent: Int, level: Int, newline: Boolean): String {
@@ -148,31 +167,24 @@ internal fun convertValue(value: Any?, indent: Int, level: Int, newline: Boolean
         is BigInteger -> value.toString()
         is AtomicInteger -> value.get().toString()
         is AtomicLong -> value.get().toString()
-        is JSObject -> value.buildJsonString(indent, level + 1, newline)
-        is JSArray -> value.buildJsonString(indent, level + 1, newline)
+        is JSObject -> value.buildJsonObjectString(indent, level + 1, newline)
+        is JSArray -> value.buildJsonArrayString(indent, level + 1, newline)
         is Map<*, *> -> {
             @Suppress("UNCHECKED_CAST")
             // This might be faster to cast if the typing is correct
             val realMap = value as? Map<String, *> ?: value.mapKeys { "${it.key}" }
-            return realMap.buildJsonString(indent, level + 1, newline)
+            return realMap.buildJsonObjectString(indent, level + 1, newline)
         }
-        is List<*> -> value.buildJsonString(indent, level + 1, newline)
-        is Array<*> -> value.buildJsonString(indent, level + 1, newline)
+        is List<*> -> value.buildJsonArrayString(indent, level + 1, newline)
+        is Array<*> -> value.buildJsonArrayString(indent, level + 1, newline)
         else -> throw IllegalStateException("Cannot convert type: ${value::class}")
     }
 }
 
-internal inline fun <reified A: Appendable> A.indent(indent: Int, level: Int): A {
+private inline fun <reified A: Appendable> A.indent(indent: Int, level: Int): A {
     if(level == 0 || indent == 0)
         return this
     append(String(CharArray(level * indent) { ' ' }))
-    return this
-}
-
-internal inline fun <reified A: Appendable> A.renderString(str: String): A {
-    append('"')
-    append(escape(str))
-    append('"')
     return this
 }
 
@@ -195,12 +207,10 @@ private fun escape(str: String): String = buildString {
                 when(c) {
                     in '\u0000'..'\u001F',
                     in '\u007F'..'\u009F',
-                    in '\u2000'..'\u20FF' -> append("\\u${Int.toHexString(c.toInt()).padStart(4, '0')}")
+                    in '\u2000'..'\u20FF' -> append("\\u${Integer.toHexString(c.toInt()).padStart(4, '0')}")
                     else -> append(c)
                 }
             }
         }
     }
 }
-
-private inline fun Int.Companion.toHexString(i: Int): String = Integer.toHexString(i)

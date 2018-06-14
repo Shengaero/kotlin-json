@@ -15,6 +15,15 @@
  */
 rootProject.name = 'kotlin-json'
 
-include ':core'
-include ':reflect'
+void module(String name, String path = null) {
+    include name
+    if(path != null) {
+        project(name).projectDir = file(path)
+    }
+}
 
+module ':core'
+module ':reflect'
+module ':ktor-client', '/libraries/ktor/client'
+module ':ktor-common', '/libraries/ktor/common'
+module ':ktor-server', '/libraries/ktor/server'

@@ -28,10 +28,9 @@ import kotlin.reflect.full.cast
  * @author Kaidan Gustave
  * @since  1.5
  */
-open class JSDeserializer {
+class JSDeserializer {
     // Remain internal for testing.
-    // Also lazy as a workaround for opening class.
-    internal val cache by lazy { DeserializationCache(this) }
+    internal val cache = DeserializationCache(this)
 
     fun <T: Any> deserialize(json: JSObject, klass: KClass<T>): T {
         checkIfReflectionIsInClasspath()
@@ -42,4 +41,6 @@ open class JSDeserializer {
         checkIfReflectionIsInClasspath()
         cache.register(klass)
     }
+
+    fun isRegistered(klass: KClass<*>) = cache.isRegistered(klass)
 }

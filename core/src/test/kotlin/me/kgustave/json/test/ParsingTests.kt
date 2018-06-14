@@ -29,8 +29,7 @@ import kotlin.test.assertTrue
 
 @DisplayName("Parsing Tests")
 class ParsingTests {
-    @Nested
-    inner class `Json Objects` {
+    @Nested inner class `Json Objects` {
         @Test fun `Parse Simple`() {
             val json = parseJsonObject("""
                 {
@@ -65,7 +64,7 @@ class ParsingTests {
                 }
             """)
 
-            val values = assertNotNull(json.opt<JSArray>("values"))
+            val values = assertNotNull(json.optArray("values"))
             val sum = values.sumBy { assertNotNull(it as? Int) }
             assertEquals(sum, json.int("sum"))
         }
@@ -78,8 +77,7 @@ class ParsingTests {
         }
     }
 
-    @Nested
-    inner class `Json Arrays` {
+    @Nested inner class `Json Arrays` {
         @Test fun `Parse Simple`() {
             val json = parseJsonArray("""
                 [
@@ -142,14 +140,13 @@ class ParsingTests {
         }
     }
 
-    @Nested
-    inner class `IO Operations` {
+    @Nested inner class `IO Operations` {
         @Test fun `Read JSObject From Resource`() {
             val url = checkNotNull(this::class.java.getResource("/test.json"))
             val json = url.readJSObject()
 
             assertNotNull(json["github"] as? String)
-            val repositories = assertNotNull(json.opt<JSArray>("repositories"))
+            val repositories = assertNotNull(json.optArray("repositories"))
             assertEquals(repositories.size, 1)
             assertNotNull(repositories[0] as? JSObject)
         }

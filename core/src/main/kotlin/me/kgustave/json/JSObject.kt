@@ -29,7 +29,6 @@ import kotlin.reflect.KClass
  * @author Kaidan Gustave
  * @since  1.0
  */
-@JSONDsl
 interface JSObject: MutableMap<String, Any?>, JSString {
     /**
      * Gets the [Boolean] value for the [key] specified.

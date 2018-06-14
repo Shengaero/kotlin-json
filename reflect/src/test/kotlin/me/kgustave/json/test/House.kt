@@ -15,6 +15,9 @@
  */
 package me.kgustave.json.test
 
+import me.kgustave.json.reflect.JSSerializable
+
+@JSSerializable
 data class House(
     val address: String,
     val tenants: List<Person>

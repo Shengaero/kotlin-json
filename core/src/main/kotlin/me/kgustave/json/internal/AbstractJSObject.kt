@@ -27,42 +27,34 @@ import me.kgustave.json.*
 internal abstract class AbstractJSObject(
     protected val map: MutableMap<String, Any?> = HashMap()
 ): JSObject, MutableMap<String, Any?> by map {
-    constructor(x: JSTokener): this() {
+    constructor(tokener: JSTokener): this() {
+        if(tokener.nextSymbol() != '{') {
+            tokener.syntaxError("A JSObject text must begin with '{'")
+        }
+
         var c: Char
-        var key: String
-
-        if(x.nextClean() != '{')
-            x.syntaxError("A JSObject text must begin with '{'")
-
         while(true) {
-            c = x.nextClean()
-            when (c) {
-                0.toChar() -> x.syntaxError("A JSObject text must end with '}'")
+            c = tokener.nextSymbol()
+
+            when(c) {
+                JSTokener.NCHAR -> {
+                    tokener.syntaxError("A JSObject text must end with '}'")
+                }
 
                 '}' -> return
-
-                else -> {
-                    x.back()
-                    key = x.nextValue().toString()
-                }
             }
-
-            c = x.nextClean()
-            if(c != ':') {
-                x.syntaxError("Expected a ':' after a key")
-            }
-
-            map[key] = x.nextValue()
-
-            when(x.nextClean()) {
+            tokener.prev()
+            val key = tokener.nextKey()
+            map[key] = tokener.nextValue()
+            when(tokener.nextSymbol()) {
                 ';', ',' -> {
-                    if(x.nextClean() == '}') return
-                    x.back()
+                    if(tokener.nextSymbol() == '}') return
+                    tokener.prev()
                 }
 
                 '}' -> return
 
-                else -> x.syntaxError("Expected a ',' or '}'")
+                else -> tokener.syntaxError("Expected a ',' or '}'")
             }
         }
     }
@@ -76,6 +68,6 @@ internal abstract class AbstractJSObject(
         return map[key] === null
     }
 
-    override fun toJsonString(indent: Int): String = buildJsonString(indent)
+    override fun toJsonString(indent: Int): String = buildJsonObjectString(indent)
     override fun toString(): String = toJsonString(0)
 }

@@ -18,7 +18,6 @@ package me.kgustave.json.internal
 
 import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
-import me.kgustave.json.toJSArray
 import java.math.BigInteger
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -31,15 +30,18 @@ internal fun convertValue(value: Any?): Any? {
         is AtomicInteger -> value.get()
         is AtomicLong -> value.get()
 
-        is String, is Number,
-        is Boolean, is BigInteger,
-        is JSObject, is JSArray -> value
+        is String, is Number, is BigInteger,
+        is Boolean, is JSObject, is JSArray -> value
 
-        is Map<*, *> -> JSObjectImpl(value.mapKeys { "$it" })
-        is Pair<*, *> -> JSObjectImpl(Pair("${value.first}", value.second))
+        is Pair<*, *> -> JSObjectImpl("${value.first}" to convertValue(value.second))
+        is Map<*, *> -> value.entries.associateByTo(JSObjectImpl(), {
+            it.key as? String ?: "${it.key}"
+        }, {
+            convertValue(it.value)
+        })
 
-        is Collection<*> -> value.toJSArray()
-        is Array<*> -> value.toJSArray()
+        is Collection<*> -> JSArrayImpl(value.mapTo(ArrayList(value.size)) { convertValue(it) })
+        is Array<*> -> JSArrayImpl(value.mapTo(ArrayList(value.size)) { convertValue(it) })
 
         else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
     }

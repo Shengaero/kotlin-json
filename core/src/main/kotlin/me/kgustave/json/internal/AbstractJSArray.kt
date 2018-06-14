@@ -26,30 +26,30 @@ import me.kgustave.json.JSArray
  */
 internal abstract class AbstractJSArray(protected val list: MutableList<Any?> = ArrayList()): JSArray,
     MutableList<Any?> by list {
-    constructor(x: JSTokener): this() {
-        if(x.nextClean() != '[') {
-            x.syntaxError("A JSArray text must start with '['")
+    constructor(tokener: JSTokener): this() {
+        if(tokener.nextSymbol() != '[') {
+            tokener.syntaxError("A JSArray text must start with '['")
         }
-        if(x.nextClean() != ']') {
-            x.back()
+        if(tokener.nextSymbol() != ']') {
+            tokener.prev()
             while(true) {
-                if(x.nextClean() == ',') {
-                    x.back()
+                if(tokener.nextSymbol() == ',') {
+                    tokener.prev()
                     list.add(null)
                 } else {
-                    x.back()
-                    list.add(x.nextValue())
+                    tokener.prev()
+                    list.add(tokener.nextValue())
                 }
 
-                when(x.nextClean()) {
+                when(tokener.nextSymbol()) {
                     ',' -> {
-                        if(x.nextClean() == ']') {
+                        if(tokener.nextSymbol() == ']') {
                             return
                         }
-                        x.back()
+                        tokener.prev()
                     }
                     ']' -> return
-                    else -> x.syntaxError("Expected a ',' or ']'")
+                    else -> tokener.syntaxError("Expected a ',' or ']'")
                 }
             }
         }
@@ -69,6 +69,6 @@ internal abstract class AbstractJSArray(protected val list: MutableList<Any?> = 
         return this[index] === null
     }
 
-    override fun toJsonString(indent: Int): String = buildJsonString(indent, 0)
+    override fun toJsonString(indent: Int): String = buildJsonArrayString(indent, 0)
     override fun toString(): String = toJsonString(0)
 }

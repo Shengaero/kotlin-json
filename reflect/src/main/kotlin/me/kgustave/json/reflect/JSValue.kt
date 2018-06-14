@@ -20,6 +20,10 @@ import kotlin.annotation.AnnotationRetention.*
 import kotlin.annotation.AnnotationTarget.*
 
 /**
+ * Explicitly specifies that a property is a JSValue.
+ *
+ * Normally a value
+ *
  * @author Kaidan Gustave
  * @since  1.5
  */

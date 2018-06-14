@@ -20,7 +20,6 @@ import me.kgustave.json.JSObject
 import me.kgustave.json.reflect.internal.checkIfReflectionIsInClasspath
 import me.kgustave.json.reflect.internal.reflectionError
 import me.kgustave.json.reflect.internal.serialization.SerializationCache
-import java.math.BigInteger
 import kotlin.reflect.KClass
 
 /**
@@ -29,14 +28,24 @@ import kotlin.reflect.KClass
  * @author Kaidan Gustave
  * @since  1.5
  */
-open class JSSerializer {
+class JSSerializer @JvmOverloads constructor(configure: JSSerializer.Config.() -> Unit = {}) {
     // Remain internal for testing.
-    // Also lazy as a workaround for opening class.
-    internal val cache by lazy { SerializationCache(this) }
+    internal val cache = SerializationCache(this)
+
+    val isSafe: Boolean
+
+    init {
+        val config = Config().apply(configure)
+        this.isSafe = config.isSafe
+    }
 
     fun serialize(any: Any): JSObject {
         checkIfReflectionIsInClasspath()
-        verifyNotBottomType(any)
+        when(any) {
+            is String, is Boolean, is Number -> reflectionError {
+                "Cannot convert simplistic/primitive type: ${any::class}!"
+            }
+        }
         return cache.destruct(any)
     }
 
@@ -45,11 +54,19 @@ open class JSSerializer {
         cache.register(klass)
     }
 
-    private fun verifyNotBottomType(any: Any) {
-        when(any) {
-            is String, is Boolean, is Number, is BigInteger -> reflectionError {
-                "Cannot convert simplistic/primitive type: ${any::class}!"
-            }
-        }
+    fun isRegistered(klass: KClass<*>) = cache.isRegistered(klass)
+
+    /**
+     * Configurations for [JSSerializer].
+     *
+     * @author Kaidan Gustave
+     * @since  1.6
+     */
+    class Config internal constructor() {
+        /**
+         * Makes the configured JSSerializer safe from types
+         * not marked with [@JSSerializable][JSSerializable].
+         */
+        var isSafe = false
     }
 }

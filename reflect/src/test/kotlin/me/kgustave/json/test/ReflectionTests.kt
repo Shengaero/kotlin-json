@@ -22,11 +22,12 @@ import me.kgustave.json.JSObject
 import me.kgustave.json.reflect.JSDeserializer
 import me.kgustave.json.reflect.JSSerializer
 import me.kgustave.json.reflect.deserialize
+import me.kgustave.json.reflect.exceptions.JSReflectionException
 import org.junit.jupiter.api.*
-import kotlin.system.measureTimeMillis
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 @DisplayName("Reflection Tests")
 class ReflectionTests {
@@ -34,10 +35,14 @@ class ReflectionTests {
     @DisplayName("Serialization Tests")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     inner class SerializationTests {
-        private val serializer = JSSerializer()
+        private val serializer = JSSerializer {
+            this.isSafe = true
+        }
 
-        @BeforeEach fun `Clear Strategies Cache` () {
-            serializer.cache.clearStrategies()
+        @BeforeEach fun `Clear Strategies Cache` (info: RepetitionInfo) {
+            if(info.currentRepetition == info.totalRepetitions) {
+                serializer.cache.clearStrategies()
+            }
         }
 
         @RepeatedTest(100) fun `Serialize Class Instance to JSON` () {
@@ -46,31 +51,6 @@ class ReflectionTests {
             val james = Person("James", 22, mother = maxine, father = logan)
             val house = House("123 Home Address", listOf(logan, maxine, james))
             serializer.serialize(house)
-        }
-
-        @Test fun `Reduce Runtime Significantly With Strategy Caching` () {
-            val house = House(
-                address = "44 JSON Lane",
-                tenants = listOf(
-                    Person(name = "Annie", age = 25),
-                    Person(name = "Calvin", age = 28),
-                    Person(name = "Marcus", age = 26),
-                    Person(name = "Matthew", age = 24),
-                    Person(name = "Ellen", age = 24)
-                )
-            )
-
-            val t1 = measureTimeMillis { serializer.serialize(house) }
-
-            // clear cache
-            serializer.cache.clearStrategies()
-            serializer.register(House::class)
-            serializer.register(Person::class)
-
-            val t2 = measureTimeMillis { serializer.serialize(house) }
-
-            println("No Pre-Register: $t1 ms")
-            println("With Pre-Register: $t2 ms")
         }
     }
 
@@ -116,48 +96,22 @@ class ReflectionTests {
             checkPerson("Logan", 66, person?.father)
         }
 
-        @Disabled
-        @Test fun `Reduce Runtime Significantly With Strategy Caching` () {
+        @RepeatedTest(100) fun `Deserialize JSON to Non-Data Class` () {
             val json = JSObject {
-                "address" to "44 JSON Lane"
-                "tenants" to JSArray(
-                    JSObject {
-                        "name" to "Annie"
-                        "age" to 25
-                    },
-                    JSObject {
-                        "name" to "Calvin"
-                        "age" to 28
-                    },
-                    JSObject {
-                        "name" to "Marcus"
-                        "age" to 26
-                    },
-                    JSObject {
-                        "name" to "Matthew"
-                        "age" to 24
-                    },
-                    JSObject {
-                        "name" to "Ellen"
-                        "age" to 24
-                    }
-                )
+                "name" to "Introduction to Kotlin"
+                "pages" to 178
+                "author" to null
             }
 
-            val t1 = measureTimeMillis { deserializer.deserialize<House>(json) }
+            val book = deserializer.deserialize<Book>(json)
 
-            // clear cache
-            deserializer.cache.clearStrategies()
+            assertEquals("Introduction to Kotlin", book.name)
+            assertEquals(178, book.pages)
+            assertNull(book.author)
 
-            deserializer.register(House::class)
-            deserializer.register(Person::class)
+            json -= "author"
 
-            val t2 = measureTimeMillis { deserializer.deserialize<House>(json) }
-
-            println("No Pre-Register: $t1 ms")
-            println("With Pre-Register: $t2 ms")
-
-            assertTrue(t1 > t2, "No noticeable runtime gains!")
+            assertFailsWith<JSReflectionException> { deserializer.deserialize<Book>(json) }
         }
 
         private fun checkPerson(expectedName: String, expectedAge: Int, person: Person?) {
