@@ -19,9 +19,12 @@ import me.kgustave.json.JSObject
 
 // JSDeserializer
 
+@JSDeserialization
 inline fun <reified T: Any> JSDeserializer.deserialize(json: JSObject): T = deserialize(json, T::class)
+@JSDeserialization
 inline fun <reified T: Any> JSDeserializer.register() = register(T::class)
 
 // JSSerializer
 
+@JSSerialization
 inline fun <reified T: Any> JSSerializer.register() = register(T::class)

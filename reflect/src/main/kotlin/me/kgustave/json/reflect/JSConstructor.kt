@@ -15,7 +15,6 @@
  */
 package me.kgustave.json.reflect
 
-import me.kgustave.json.reflect.internal.JSDeserialization
 import kotlin.annotation.AnnotationRetention.*
 import kotlin.annotation.AnnotationTarget.*
 

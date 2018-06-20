@@ -15,13 +15,10 @@
  */
 package me.kgustave.json.reflect
 
-import me.kgustave.json.reflect.internal.JSSerialization
 import kotlin.annotation.AnnotationRetention.*
 import kotlin.annotation.AnnotationTarget.*
 
 /**
- *
- *
  * @author Kaidan Gustave
  * @since  1.6
  */

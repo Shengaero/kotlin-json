@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 @file:JvmMultifileClass()
-package me.kgustave.json.reflect.internal
+package me.kgustave.json.reflect
 
 import kotlin.annotation.AnnotationRetention.*
 import kotlin.annotation.AnnotationTarget.*
@@ -28,8 +28,9 @@ import kotlin.annotation.AnnotationTarget.*
  */
 @MustBeDocumented
 @Retention(SOURCE)
-@Target(ANNOTATION_CLASS)
-internal annotation class JSSerialization
+@Target(ANNOTATION_CLASS, CLASS, FUNCTION, PROPERTY)
+@Experimental(Experimental.Level.WARNING)
+annotation class JSSerialization
 
 /**
  * Marks an annotation that is used in
@@ -40,5 +41,6 @@ internal annotation class JSSerialization
  */
 @MustBeDocumented
 @Retention(SOURCE)
-@Target(ANNOTATION_CLASS)
-internal annotation class JSDeserialization
+@Target(ANNOTATION_CLASS, CLASS, FUNCTION, PROPERTY)
+@Experimental(Experimental.Level.WARNING)
+annotation class JSDeserialization

@@ -32,3 +32,13 @@ kotlin {
         coroutines = 'ENABLE'
     }
 }
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = [
+                useExperimental('kotlin.Experimental'),
+                useExperimental('me.kgustave.json.reflect.JSSerialization'),
+                useExperimental('me.kgustave.json.reflect.JSDeserialization')
+        ]
+    }
+}

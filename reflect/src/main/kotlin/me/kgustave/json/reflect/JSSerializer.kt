@@ -28,10 +28,12 @@ import kotlin.reflect.KClass
  * @author Kaidan Gustave
  * @since  1.5
  */
+@JSSerialization
 class JSSerializer @JvmOverloads constructor(configure: JSSerializer.Config.() -> Unit = {}) {
     // Remain internal for testing.
     internal val cache = SerializationCache(this)
 
+    @JSSerialization
     val isSafe: Boolean
 
     init {
@@ -39,6 +41,7 @@ class JSSerializer @JvmOverloads constructor(configure: JSSerializer.Config.() -
         this.isSafe = config.isSafe
     }
 
+    @JSSerialization
     fun serialize(any: Any): JSObject {
         checkIfReflectionIsInClasspath()
         when(any) {
@@ -49,11 +52,13 @@ class JSSerializer @JvmOverloads constructor(configure: JSSerializer.Config.() -
         return cache.destruct(any)
     }
 
+    @JSSerialization
     fun register(klass: KClass<*>) {
         checkIfReflectionIsInClasspath()
         cache.register(klass)
     }
 
+    @JSSerialization
     fun isRegistered(klass: KClass<*>) = cache.isRegistered(klass)
 
     /**
@@ -62,11 +67,13 @@ class JSSerializer @JvmOverloads constructor(configure: JSSerializer.Config.() -
      * @author Kaidan Gustave
      * @since  1.6
      */
+    @JSSerialization
     class Config internal constructor() {
         /**
          * Makes the configured JSSerializer safe from types
          * not marked with [@JSSerializable][JSSerializable].
          */
+        @JSSerialization
         var isSafe = false
     }
 }
