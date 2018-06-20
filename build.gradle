@@ -83,6 +83,8 @@ subprojects {
 
     ext {
         kotlinJvmTarget = '1.8'
+        useExperimental = { String exp -> "-Xuse-experimental=$exp" }
+
         repositories {
             ktorBintray = {
                 maven { url = "https://dl.bintray.com/kotlin/ktor" }

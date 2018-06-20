@@ -18,8 +18,6 @@ dependencies {
     compile core()
 }
 
-def useExperimental = { String exp -> "-Xuse-experimental=$exp" }
-
 def compilerArgs = [
         useExperimental('kotlin.Experimental'),
         useExperimental('me.kgustave.json.reflect.JSSerialization'),
