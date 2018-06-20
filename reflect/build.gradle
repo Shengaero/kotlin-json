@@ -17,3 +17,23 @@ dependencies {
     compileOnly kotlin('reflect')
     compile core()
 }
+
+def useExperimental = { String exp -> "-Xuse-experimental=$exp" }
+
+def compilerArgs = [
+        useExperimental('kotlin.Experimental'),
+        useExperimental('me.kgustave.json.reflect.JSSerialization'),
+        useExperimental('me.kgustave.json.reflect.JSDeserialization')
+]
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = compilerArgs
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs = compilerArgs
+    }
+}
