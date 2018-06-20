@@ -61,8 +61,8 @@ allprojects {
             repo = 'maven'
             name = 'kotlin-json'
             licenses = ['Apache-2.0']
-            vcsUrl = 'https://github.com/TheMonitorLizard/kotlin-json/'
-            githubRepo = 'https://github.com/TheMonitorLizard/kotlin-json/'
+            vcsUrl = 'https://github.com/Shengaero/kotlin-json.git'
+            githubRepo = 'https://github.com/Shengaero/kotlin-json/'
             version {
                 name = project.version
                 released = new Date()
