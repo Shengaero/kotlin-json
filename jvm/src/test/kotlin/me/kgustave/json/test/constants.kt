@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-kotlinJvmConfig(true)
-dokkaConfig('JVM')
+package me.kgustave.json.test
 
-dependencies {
-    expectedBy common()
-}
+import org.junit.jupiter.api.RepeatedTest
+
+internal const val TrialNumber = RepeatedTest.CURRENT_REPETITION_PLACEHOLDER
+internal const val TotalTrialNumber = RepeatedTest.TOTAL_REPETITIONS_PLACEHOLDER
+internal const val SimpleRepeatedTestName =
+    "${RepeatedTest.DISPLAY_NAME_PLACEHOLDER} [$TrialNumber/$TotalTrialNumber]"

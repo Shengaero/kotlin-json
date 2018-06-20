@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 kotlinJvmConfig()
+dokkaConfig()
 
 repositories {
     ktorBintray()

@@ -41,6 +41,4 @@ internal actual fun renderValue(value: Any?, indent: Int, level: Int, newline: B
     }
 }
 
-internal actual fun renderHexString(int: Int): String {
-    TODO("Implement")
-}
+internal actual fun renderHexString(int: Int) = js("int.toString(16)") as String

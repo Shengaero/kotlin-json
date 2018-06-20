@@ -20,6 +20,7 @@ buildscript {
         dokka_version = '0.9.17'
         junit_version = '1.0.1'
         jupiter_version = '5.0.1'
+        node_plugin_version = '1.2.0'
         shadow_version = '2.0.1'
         versions_version = '0.17.0'
         bintray_version = '1.7.3'
@@ -27,6 +28,7 @@ buildscript {
 
     repositories {
         jcenter()
+        maven { url = "https://plugins.gradle.org/m2/" }
     }
     
     dependencies {
@@ -34,6 +36,7 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_version"
         classpath "com.github.jengelman.gradle.plugins:shadow:$shadow_version"
+        classpath "com.moowork.gradle:gradle-node-plugin:$node_plugin_version"
         classpath "com.github.ben-manes:gradle-versions-plugin:$versions_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
     }
@@ -48,7 +51,7 @@ allprojects {
     apply plugin: 'com.jfrog.bintray'
 
     group = 'me.kgustave'
-    version = versionStr
+    version = versionObj.values().join('.')
 
     rootProject.subprojects.each { proj ->
         if(proj != rootProject) {
@@ -84,9 +87,9 @@ subprojects {
     if(project.hasProperty('deprecated') && project.deprecated) {
         return
     }
+
     apply plugin: 'java-library'
     apply plugin: 'org.jetbrains.dokka'
-    apply plugin: 'com.github.johnrengelman.shadow'
     apply plugin: 'com.github.ben-manes.versions'
 
     ext {
@@ -104,122 +107,14 @@ subprojects {
             ktor = { String module -> "io.ktor:ktor-$module:$ktor_version" }
             junit = { String module -> "org.junit.jupiter:junit-jupiter-$module:$jupiter_version" }
         }
-
-        kotlinJvmConfig = { boolean common = false ->
-            apply plugin: 'org.junit.platform.gradle.plugin'
-
-            if(!common) {
-                apply plugin: 'kotlin'
-            } else {
-                apply plugin: 'kotlin-platform-jvm'
-            }
-
-            sourceCompatibility = 1.8
-
-            sourceSets {
-                test.kotlin.srcDirs += 'src/test/kotlin'
-                test.compileClasspath += main.compileClasspath
-                test.runtimeClasspath += main.runtimeClasspath + main.compileClasspath
-            }
-
-            dependencies {
-                compileOnly kotlin('stdlib')
-                compileOnly kotlin('stdlib-jdk8')
-                compileOnly kotlin('stdlib-jdk7')
-
-                testCompile kotlin('test')
-                testCompile kotlin('test-junit')
-                testCompile junit('api')
-                testCompile junit('params')
-                testRuntime junit('engine')
-            }
-
-            compileKotlin {
-                kotlinOptions {
-                    jvmTarget = '1.8'
-                }
-            }
-
-            compileTestKotlin {
-                kotlinOptions {
-                    jvmTarget = '1.8'
-                }
-            }
-
-            dokka {
-                outputFormat = 'html'
-                outputDirectory = "$buildDir/dokka"
-
-                jdkVersion = 8
-                impliedPlatforms = ['JVM']
-
-                noStdlibLink = false
-
-                skipDeprecated = true
-                skipEmptyPackages = true
-
-                reportUndocumented = false
-                includeNonPublic = false
-            }
-
-            task dokkaJar(type: Jar, dependsOn: dokka) {
-                group = 'build'
-                description = 'Generates a dokka-javadoc jar'
-
-                baseName = "$moduleName"
-                version = versionStr
-                classifier = 'javadoc'
-                logging.level = LogLevel.QUIET
-                from dokka.outputDirectory
-            }
-
-            build {
-                dependsOn dokkaJar
-            }
-        }
-
-        kotlinJsConfig = { boolean common = false ->
-            apply plugin: !common ? 'kotlin2js' : 'kotlin-platform-js'
-
-            dependencies {
-                compileOnly kotlin('stdlib-js')
-
-                testCompile kotlin('test-js')
-            }
-
-            compileKotlin2Js {
-                kotlinOptions {
-                    main = 'noCall'
-                    moduleKind = 'umd'
-                    noStdlib = true
-                    metaInfo = true
-                    typedArrays = true
-                }
-            }
-
-            compileTestKotlin2Js {
-                kotlinOptions {
-                    main = 'noCall'
-                    moduleKind = 'umd'
-                    noStdlib = true
-                    metaInfo = true
-                    typedArrays = true
-                }
-            }
-        }
-
-        kotlinCommonConfig = {
-            apply plugin: 'kotlin-platform-common'
-
-            dependencies {
-                compileOnly kotlin('stdlib-common')
-
-                testCompile kotlin('test-common')
-            }
-        }
     }
 
-    setProperty('archivesBaseName', moduleName.replaceAll('-', '_'))
+    apply from: "$rootProject.projectDir/config/kotlin-common.gradle"
+    apply from: "$rootProject.projectDir/config/kotlin-jvm.gradle"
+    apply from: "$rootProject.projectDir/config/kotlin2js.gradle"
+    apply from: "$rootProject.projectDir/config/dokka.gradle"
+
+    setProperty('archivesBaseName', moduleName)
 
     repositories {
         jcenter()
@@ -236,41 +131,23 @@ subprojects {
         }
     }
 
-    task copySource(type: Copy) {
-        group = 'build'
-        description = 'Copies sources for release to the build directory'
-
-        from { sourceSets.main.allSource }
-        destinationDir = file("$buildDir/sources")
-    }
-
-    task sourcesJar(type: Jar, dependsOn: copySource) {
+    task sourcesJar(type: Jar) {
         group = 'build'
         description = 'Generates a sources jar'
 
         baseName = "$moduleName"
-        version = versionStr
+        version = "$project.version"
         classifier = 'sources'
-        from copySource.destinationDir
-    }
-
-    shadowJar {
-        baseName = "$moduleName"
-        version = versionStr
-        classifier = 'withDependencies'
+        from { sourceSets.main.allSource }
     }
 
     build {
         dependsOn clean
-        dependsOn testClasses
         dependsOn jar
         dependsOn sourcesJar
-        dependsOn shadowJar
 
-        testClasses.mustRunAfter clean
-        jar.mustRunAfter testClasses
+        jar.mustRunAfter clean
         sourcesJar.mustRunAfter jar
-        shadowJar.mustRunAfter sourcesJar
     }
 
     publishing {
@@ -344,7 +221,7 @@ publishing {
                 def core = jvm()
 
                 dependencyNode.appendNode('groupId', core.group)
-                dependencyNode.appendNode('artifactId', 'kotlin-json-core')
+                dependencyNode.appendNode('artifactId', core.moduleName)
                 dependencyNode.appendNode('version', core.version)
                 dependencyNode.appendNode('scope', 'compile')
             }

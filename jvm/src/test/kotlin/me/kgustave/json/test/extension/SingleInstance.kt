@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-kotlinJvmConfig(true)
-dokkaConfig('JVM')
+package me.kgustave.json.test.extension
 
-dependencies {
-    expectedBy common()
-}
+import org.junit.jupiter.api.TestInstance
+
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+annotation class SingleInstance

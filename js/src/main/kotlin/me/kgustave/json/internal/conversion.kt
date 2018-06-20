@@ -17,6 +17,7 @@ package me.kgustave.json.internal
 
 import me.kgustave.json.JSArray
 import me.kgustave.json.JSObject
+import me.kgustave.json.jsonObject
 
 internal actual fun convertValue(value: Any?): Any? {
     return when(value) {
@@ -25,15 +26,12 @@ internal actual fun convertValue(value: Any?): Any? {
         is String, is Number, is Boolean, is JSObject, is JSArray -> value
 
         is Pair<*, *> -> JSObjectImpl("${value.first}" to convertValue(value.second))
-        is Map<*, *> -> value.entries.associateByTo(JSObjectImpl(), {
-            it.key as? String ?: "${it.key}"
-        }, {
-            convertValue(it.value)
-        })
+        is Map<*, *> -> value.entries.associateByTo(JSObjectImpl(),
+            { it.key as? String ?: "${it.key}" }, { convertValue(it.value) })
 
         is Collection<*> -> JSArrayImpl(value.mapTo(ArrayList(value.size)) { convertValue(it) })
         is Array<*> -> JSArrayImpl(value.mapTo(ArrayList(value.size)) { convertValue(it) })
 
-        else -> throw IllegalArgumentException("${value::class} is not a valid JS type!")
+        else -> convertValue(jsonObject(value))
     }
 }

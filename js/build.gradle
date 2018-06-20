@@ -18,3 +18,5 @@ kotlinJsConfig(true)
 dependencies {
     expectedBy common()
 }
+
+populateModules()

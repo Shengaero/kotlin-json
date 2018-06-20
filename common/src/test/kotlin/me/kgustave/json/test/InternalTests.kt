@@ -13,9 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-kotlinJvmConfig(true)
-dokkaConfig('JVM')
+package me.kgustave.json.test
 
-dependencies {
-    expectedBy common()
+import me.kgustave.json.internal.renderHexString
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class InternalTests {
+    @Test fun testRenderToHexString() {
+        val hex = renderHexString(20)
+        assertEquals("14", hex)
+    }
 }

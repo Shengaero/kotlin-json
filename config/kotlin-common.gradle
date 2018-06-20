@@ -13,9 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-kotlinJvmConfig(true)
-dokkaConfig('JVM')
+project.ext.kotlinCommonConfig = {
+    apply plugin: 'kotlin-platform-common'
 
-dependencies {
-    expectedBy common()
+    dependencies {
+        compileOnly kotlin('stdlib-common')
+
+        testCompile kotlin('test-common')
+        testCompile kotlin('test-annotations-common')
+    }
 }

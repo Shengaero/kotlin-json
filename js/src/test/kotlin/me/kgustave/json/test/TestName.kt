@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-kotlinJvmConfig(true)
-dokkaConfig('JVM')
+package me.kgustave.json.test
 
-dependencies {
-    expectedBy common()
-}
+/**
+ * @author Kaidan Gustave
+ */
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+actual annotation class TestName actual constructor(actual val value: String)
