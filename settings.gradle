@@ -22,7 +22,10 @@ void module(String name, String path = null) {
     }
 }
 
+module ':common'
 module ':core'
+module ':js'
+module ':jvm'
 module ':reflect'
 module ':ktor-client', '/libraries/ktor/client'
 module ':ktor-common', '/libraries/ktor/common'
