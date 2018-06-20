@@ -28,19 +28,23 @@ import kotlin.reflect.full.cast
  * @author Kaidan Gustave
  * @since  1.5
  */
+@JSDeserialization
 class JSDeserializer {
     // Remain internal for testing.
     internal val cache = DeserializationCache(this)
 
+    @JSDeserialization
     fun <T: Any> deserialize(json: JSObject, klass: KClass<T>): T {
         checkIfReflectionIsInClasspath()
         return klass.cast(cache.construct(klass, json))
     }
 
+    @JSDeserialization
     fun <T: Any> register(klass: KClass<T>) {
         checkIfReflectionIsInClasspath()
         cache.register(klass)
     }
 
+    @JSDeserialization
     fun isRegistered(klass: KClass<*>) = cache.isRegistered(klass)
 }

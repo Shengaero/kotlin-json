@@ -91,6 +91,7 @@ subprojects {
 
     ext {
         moduleName = "$rootProject.name-$project.name"
+        useExperimental = { String exp -> "-Xuse-experimental=$exp" }
 
         repositories {
             ktorBintray = {
