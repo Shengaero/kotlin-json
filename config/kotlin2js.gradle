@@ -54,12 +54,15 @@ project.ext.kotlinJsConfig = { boolean common = false ->
     task copyReadme(type: Copy) {
         group = 'npm'
         into npmBuildDir
-        if(project.file('README.md').exists()) {
-            from project.projectDir
-        } else {
-            from rootProject.projectDir
-        }
+        from project.file('README.md').exists() ? project.projectDir : rootProject.projectDir
         include 'README.md'
+    }
+
+    task copyLicense(type: Copy) {
+        group = 'npm'
+        into npmBuildDir
+        from rootProject.projectDir
+        include 'LICENSE'
     }
 
     task processPkg(type: Copy) {
@@ -88,7 +91,7 @@ project.ext.kotlinJsConfig = { boolean common = false ->
         }
     }
 
-    task processBuildPkg(type: Copy, dependsOn: [processPkg, copyReadme]) {
+    task processBuildPkg(type: Copy, dependsOn: [processPkg, copyReadme, copyLicense]) {
         group = 'npm'
         from processPkg.destinationDir
         into npmBuildDir
@@ -116,8 +119,7 @@ project.ext.kotlinJsConfig = { boolean common = false ->
     npm_publish {
         group = 'publishing'
 
-        dependsOn processBuildPkg
-        dependsOn prepublish
+        dependsOn build
 
         args = ['--access', 'public']
         execOverrides {

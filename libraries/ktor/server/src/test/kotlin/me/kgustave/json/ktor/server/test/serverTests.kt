@@ -39,6 +39,7 @@ import me.kgustave.json.JSWriter
 import me.kgustave.json.ktor.server.JSContentConverter
 import me.kgustave.json.obj
 import me.kgustave.json.readJSObject
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
@@ -71,6 +72,7 @@ data class Account(val id: Long, val user: User)
 
 data class User(val name: String, val age: Int)
 
+@Disabled
 @DisplayName("Kotlin Json Ktor Tests")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class KotlinJsonKtorServerTests {

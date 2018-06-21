@@ -26,14 +26,10 @@ import kotlin.js.Json
 // Access
 
 @JsName("objectOf")
-actual fun jsObjectOf(vararg pairs: Pair<String, Any?>): JSObject {
-    TODO("Implement")
-}
+actual fun jsObjectOf(vararg pairs: Pair<String, Any?>): JSObject = JSObjectImpl(*pairs)
 
 @JsName("arrayOf")
-actual fun jsArrayOf(vararg items: Any?): JSArray {
-    TODO("Implement")
-}
+actual fun jsArrayOf(vararg items: Any?): JSArray = JSArrayImpl(items)
 
 // Collections
 
@@ -157,8 +153,13 @@ private inline fun <R> wrapParseError(block: () -> R): R {
 }
 
 // dynamic
+
 /**
- * Converts the provided object into
+ * Converts the provided object into a [JSObject].
+ *
+ * @param obj An object
+ *
+ * @return A [JSObject]
  */
 fun jsonObject(obj: dynamic): JSObject {
     // all of this has to be casted explicitly

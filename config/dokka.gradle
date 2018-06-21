@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 project.ext.dokkaConfig = { String... platforms = ['JVM'] ->
+    apply plugin: 'org.jetbrains.dokka'
+
     dokka {
         outputFormat = 'html'
         outputDirectory = "$buildDir/dokka"

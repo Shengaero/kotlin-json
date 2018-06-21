@@ -42,7 +42,7 @@ buildscript {
     }
 }
 
-def versionObj = [major: 1, minor: 6, revision: 0]
+def versionObj = [major: 1, minor: 7, revision: 0]
 
 allprojects {
     apply plugin: 'idea'
@@ -83,12 +83,9 @@ allprojects {
 subprojects {
     // Deprecated modules are fully configured individually
     //in order to maintain backwards compatibility.
-    if(project.hasProperty('deprecated') && project.deprecated) {
-        return
-    }
+    if(project.hasProperty('deprecated') && project.deprecated) return
 
     apply plugin: 'java-library'
-    apply plugin: 'org.jetbrains.dokka'
     apply plugin: 'com.github.ben-manes.versions'
 
     ext {
@@ -196,7 +193,12 @@ task uploadAll {
     description = 'Publishes all modules.'
 
     rootProject.childProjects.values().each {
-        dependsOn it.getTasksByName('bintrayUpload', true).first()
+        it.getTasksByName('bintrayUpload', true).each {
+            dependsOn it
+        }
+        it.getTasksByName('npm_publish', true).each {
+            dependsOn it
+        }
     }
     dependsOn bintrayUpload
 }
