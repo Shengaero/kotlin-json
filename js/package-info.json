@@ -1,6 +1,6 @@
 {
   "name": "$root_name",
-  "version": "0.0.6-ALPHA",
+  "version": "$kotlin_json_version",
   "description": "A lightweight, highly stylized JavaScript Object Notation (JSON) for The Kotlin Programming Language.",
   "author": "Kaidan Gustave",
   "license": "Apache-2.0",
