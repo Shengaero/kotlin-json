@@ -51,23 +51,44 @@ project.ext.kotlinJsConfig = { boolean common = false ->
         args = ['install', '--save-dev', 'mocha', 'kotlin']
     }
 
+    task copyReadme(type: Copy) {
+        group = 'npm'
+        into npmBuildDir
+        if(project.file('README.md').exists()) {
+            from project.projectDir
+        } else {
+            from rootProject.projectDir
+        }
+        include 'README.md'
+    }
+
     task processPkg(type: Copy) {
         group = 'npm'
         from '.'
         into '.'
         include pkgInfo
-        expand(kotlin_version: "$kotlin_version",
+
+        def expands = [
+                kotlin_version: "$kotlin_version",
                 kotlin_json_version: "$version",
-                module_name: moduleName)
+                root_name: "${rootProject.name}",
+                module_name: "$moduleName"
+        ]
+
+        expand(expands)
         rename {
-            if(it == pkgInfo) {
+            if(it.endsWith(pkgInfo)) {
+                def file = file("$project.projectDir/package.json")
+                if(!file.exists() && !file.createNewFile()) {
+                    throw new IOException("Failed to remove old package.json file!")
+                }
                 return 'package.json'
             }
             return it
         }
     }
 
-    task processBuildPkg(type: Copy, dependsOn: processPkg) {
+    task processBuildPkg(type: Copy, dependsOn: [processPkg, copyReadme]) {
         group = 'npm'
         from processPkg.destinationDir
         into npmBuildDir

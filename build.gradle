@@ -43,7 +43,6 @@ buildscript {
 }
 
 def versionObj = [major: 1, minor: 6, revision: 0]
-def versionStr = versionObj.values().join('.')
 
 allprojects {
     apply plugin: 'idea'
@@ -122,11 +121,11 @@ subprojects {
 
     jar {
         baseName = "$moduleName"
-        version = versionStr
+        version = "$version"
         classifier = ''
         manifest {
             attributes 'Automatic-Module-Name': "kotlin.json.$project.name",
-                       'Implementation-Version': versionStr,
+                       'Implementation-Version': "$version",
                        'Implementation-Title': "$moduleName"
         }
     }

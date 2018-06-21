@@ -1,10 +1,13 @@
 {
-  "name": "kotlin-json-js",
+  "name": "$module_name",
   "version": "$kotlin_json_version",
   "description": "A lightweight, highly stylized JavaScript Object Notation (JSON) for The Kotlin Programming Language.",
   "author": "Kaidan Gustave",
   "license": "Apache-2.0",
-  "keywords": ["kotlin", "JSON", "kotlin-json", "dsl", "kotlin2js", "shengaero", "kgustave"],
+  "keywords": [
+    "kotlin", "json", "kotlin-json", "$module_name",
+    "dsl", "kotlin2js", "shengaero", "kgustave"
+  ],
   "repository": "https://github.com/Shengaero/kotlin-json",
   "homepage": "https://github.com/Shengaero/kotlin-json#readme",
   "bugs": {
