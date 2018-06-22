@@ -17,17 +17,28 @@
 package me.kgustave.json
 
 import me.kgustave.json.exceptions.JSSyntaxException
-import me.kgustave.json.internal.JSArrayImpl
-import me.kgustave.json.internal.JSObjectImpl
-import me.kgustave.json.internal.buildJsonArrayString
-import me.kgustave.json.internal.buildJsonObjectString
+import me.kgustave.json.internal.*
 import kotlin.js.Json
 
 // Access
 
+/**
+ * Creates a [JSObject] using the provided key-value [pairs].
+ *
+ * @param pairs The key-value [Pairs][Pair] to create a [JSObject] with.
+ *
+ * @return A new [JSObject].
+ */
 @JsName("objectOf")
 actual fun jsObjectOf(vararg pairs: Pair<String, Any?>): JSObject = JSObjectImpl(*pairs)
 
+/**
+ * Creates a [JSArray] using the provided [items].
+ *
+ * @param items The items to create a [JSArray] with.
+ *
+ * @return A new [JSArray].
+ */
 @JsName("arrayOf")
 actual fun jsArrayOf(vararg items: Any?): JSArray = JSArrayImpl(items)
 
@@ -159,7 +170,7 @@ private inline fun <R> wrapParseError(block: () -> R): R {
  *
  * @param obj An object
  *
- * @return A [JSObject]
+ * @return A [JSObject].
  */
 fun jsonObject(obj: dynamic): JSObject {
     // all of this has to be casted explicitly
@@ -179,4 +190,122 @@ fun jsonObject(obj: dynamic): JSObject {
             return json
         }
     }
+}
+
+// Files
+
+@Suppress("UnsafeCastFromDynamic")
+private val fs: dynamic by lazy { js("require('fs')") }
+private const val fsLink = "https://nodejs.org/api/fs.html"
+
+/**
+ * Reads a [JSObject] from a file at the provided [source][src].
+ *
+ * Internally this function uses the file system (fs) API in node.js,
+ * and thus it is only available when using commonjs.
+ *
+ * The source to read from may be either a [URL][org.w3c.dom.url.URL] or a path [String].
+ *
+ * Additionally, a string name for the encoding may be specified. By
+ * default this is `UTF-8`. This must be specified in order for fs to
+ * return a string value to parse. Invalid or empty encoding strings
+ * will cause unexpected behavior or issues.
+ *
+ * @param src The source to read from.
+ * @param encoding The encoding to read with. Default `UTF-8`.
+ *
+ * @return A [JSObject] read from the source.
+ */
+fun readJSObject(src: dynamic, encoding: String = "utf8"): JSObject {
+    return parseJsonObject(readString(src, encoding))
+}
+
+/**
+ * Reads a [JSArray] from a file at the provided [source][src].
+ *
+ * Internally this function uses the file system (fs) API in node.js,
+ * and thus it is only available when using commonjs.
+ *
+ * The source to read from may be either a [URL][org.w3c.dom.url.URL] or a path [String].
+ *
+ * Additionally, a string name for the encoding may be specified. By
+ * default this is `UTF-8`. This must be specified in order for fs to
+ * return a string value to parse. Invalid or empty encoding strings
+ * will cause unexpected behavior or issues.
+ *
+ * @param src The source to read from.
+ * @param encoding The encoding to read with. Default `UTF-8`.
+ *
+ * @return A [JSArray] read from the source.
+ */
+fun readJSArray(src: dynamic, encoding: String = "utf8"): JSArray {
+    return parseJsonArray(readString(src, encoding))
+}
+
+/**
+ * Writes the receiver [JSObject] to the specified [output][out].
+ *
+ * Internally this function uses the file system (fs) API in node.js,
+ * and thus it is only available when using commonjs.
+ *
+ * Currently, only [URL][org.w3c.dom.url.URL] and [String] are safely supported by the
+ * kotlin-json API, however this may also any variables that would normally be accepted
+ * by [fs.writeFile](https://nodejs.org/api/fs.html#fs_fs_writefile_file_data_options_callback).
+ *
+ * Additionally, a string name for the encoding may be specified. By
+ * default this is `UTF-8`. This must be specified in order for fs to
+ * return a string value to parse. Invalid or empty encoding strings
+ * will cause unexpected behavior or issues.
+ *
+ * It's also worth noting that this function does not truncate any existing
+ * content. In order to perform this, a library user might look into
+ * avoiding usage of this function in favor of a more dedicated file handling
+ * library.
+ *
+ * @receiver The [JSObject] to write.
+ * @param out The output destination to write to.
+ * @param indent The indent to write with. Default 0.
+ * @param encoding The encoding to read with. Default `UTF-8`.
+ */
+fun JSObject.writeTo(out: dynamic, indent: Int = 0, encoding: String = "utf8") {
+    writeString(this.toJsonString(indent), out, encoding)
+}
+
+/**
+ * Writes the receiver [JSArray] to the specified [output][out].
+ *
+ * Internally this function uses the file system (fs) API in node.js,
+ * and thus it is only available when using commonjs.
+ *
+ * Currently, only [URL][org.w3c.dom.url.URL] and [String] are safely supported by the
+ * kotlin-json API, however this may also any variables that would normally be accepted
+ * by [fs.writeFile](https://nodejs.org/api/fs.html#fs_fs_writefile_file_data_options_callback).
+ *
+ * Additionally, a string name for the encoding may be specified. By
+ * default this is `UTF-8`. This must be specified in order for fs to
+ * return a string value to parse. Invalid or empty encoding strings
+ * will cause unexpected behavior or issues.
+ *
+ * It's also worth noting that this function does not truncate any existing
+ * content. In order to perform this, a library user might look into
+ * avoiding usage of this function in favor of a more dedicated file handling
+ * library.
+ *
+ * @receiver The [JSArray] to write.
+ * @param out The output destination to write to.
+ * @param indent The indent to write with. Default 0.
+ * @param encoding The encoding to read with. Default `UTF-8`.
+ */
+fun JSArray.writeTo(out: dynamic, indent: Int = 0, encoding: String = "utf8") {
+    writeString(this.toJsonString(indent), out, encoding)
+}
+
+private fun readString(src: dynamic, @Suppress("UNUSED_PARAMETER") encoding: String): String {
+    require(isNodeEcosystem()) { "Cannot read files without access to fs API: $fsLink" }
+    return fs.readFileSync(src, js("""{encoding: encoding}""")) as? String ?:
+           throw Error("When reading $src, the return value was not a string!")
+}
+
+private fun writeString(content: String, src: dynamic, @Suppress("UNUSED_PARAMETER") encoding: String) {
+    fs.writeFileSync(src, content, js("""{encoding: encoding}"""))
 }

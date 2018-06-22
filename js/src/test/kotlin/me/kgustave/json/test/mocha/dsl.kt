@@ -46,7 +46,7 @@ fun it(description: String, skip: Boolean = false, callback: () -> Unit) {
 fun describe(description: String, callback: () -> Unit): Suite = describe.only(description, callback)
 
 @MochaDsl
-fun run(description: String, skip: Boolean, callback: (MochaDone) -> Unit) {
+fun async(description: String, skip: Boolean = false, callback: (MochaDone) -> Unit) {
     if(skip) {
         return it.skip(description) { callback(EmptyDone) }
     }

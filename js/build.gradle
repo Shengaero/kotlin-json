@@ -19,4 +19,30 @@ dependencies {
     expectedBy common()
 }
 
+prepublish {
+    rename {
+        def dotIndex = it.indexOf('.')
+        if(dotIndex == -1) {
+            return it
+        }
+        def fileExt = it.substring(dotIndex)
+        if(it.startsWith('kotlin-json-')) {
+            return 'kotlin-json' + fileExt
+        }
+        return it
+    }
+
+    doLast {
+        def kjsmDir = file("$project.buildDir/npm/$moduleName")
+        copy {
+            def kjsmTree = fileTree(kjsmDir)
+            kjsmTree.include '**/*.kjsm'
+            from kjsmTree
+            into file("$project.buildDir/npm/$rootProject.name")
+        }
+
+        delete(kjsmDir)
+    }
+}
+
 populateModules()
