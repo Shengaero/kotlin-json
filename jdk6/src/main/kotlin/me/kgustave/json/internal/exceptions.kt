@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+@file:JvmName("Actual_Jvm_ExceptionsKt")
+package me.kgustave.json.internal
 
-void module(String name, String path = null) {
-    include name
-    if(path != null) {
-        project(name).projectDir = file(path)
-    }
+import kotlin.reflect.KClass
+
+internal actual fun isNotType(key: String, value: Any, type: KClass<*>): String {
+    return "Value with key '$key' was ${value::class.javaPrimitiveType ?: value::class.java} " +
+           "instead of ${type.javaPrimitiveType ?: type.java}"
 }
 
-module ':common'
-module ':core'
-module ':js'
-module ':jdk6'
-module ':jdk8'
-module ':reflect'
-module ':ktor-client', '/libraries/ktor/client'
-module ':ktor-common', '/libraries/ktor/common'
-module ':ktor-server', '/libraries/ktor/server'
+internal actual fun isNotType(index: Int, value: Any, type: KClass<*>): String {
+    return "Value with key '$index' was ${value::class.javaPrimitiveType ?: value::class.java} " +
+           "instead of ${type.javaPrimitiveType ?: type.java}"
+}

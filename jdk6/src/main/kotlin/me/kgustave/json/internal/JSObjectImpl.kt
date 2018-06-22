@@ -15,6 +15,9 @@
  */
 package me.kgustave.json.internal
 
+/**
+ * @author Kaidan Gustave
+ */
 internal actual class JSObjectImpl: AbstractJSObject {
     actual constructor(): super()
     actual constructor(map: Map<String, *>): this() { putAll(map) }

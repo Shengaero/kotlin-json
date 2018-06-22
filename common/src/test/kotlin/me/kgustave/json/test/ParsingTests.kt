@@ -25,6 +25,7 @@ import kotlin.test.*
 /**
  * @author Kaidan Gustave
  */
+@Ignore
 class ParsingTests {
     @Test @TestName("Parse Simple Object") fun ParseSimpleObject() {
         val json = parseJsonObject("""

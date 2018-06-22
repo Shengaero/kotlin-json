@@ -18,7 +18,7 @@ package me.kgustave.json.test
 import me.kgustave.json.JSObject
 import me.kgustave.json.exceptions.JSSyntaxException
 import me.kgustave.json.readJSObject
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull

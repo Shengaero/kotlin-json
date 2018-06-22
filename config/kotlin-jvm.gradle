@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright 2018 Kaidan Gustave
  *
@@ -15,11 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-project.ext.kotlinJvmConfig = { boolean common = false ->
-    apply plugin: 'org.junit.platform.gradle.plugin'
+project.ext.kotlinJvmConfig = { boolean common = false, int jdkVersion = 8 ->
     apply plugin: !common ? 'kotlin' : 'kotlin-platform-jvm'
 
-    sourceCompatibility = 1.8
+    // Test with junit5 when jdk is 8+
+    if(jdkVersion == 8) {
+        apply plugin: 'org.junit.platform.gradle.plugin'
+    }
+
+    sourceCompatibility = jdkVersion
 
     sourceSets {
         test.kotlin.srcDirs += 'src/test/kotlin'
@@ -29,25 +31,30 @@ project.ext.kotlinJvmConfig = { boolean common = false ->
 
     dependencies {
         compileOnly kotlin('stdlib')
-        compileOnly kotlin('stdlib-jdk8')
-        compileOnly kotlin('stdlib-jdk7')
+        if(jdkVersion == 8) {
+            compileOnly kotlin('stdlib-jdk8')
+            compileOnly kotlin('stdlib-jdk7')
+
+            testCompile junit('api')
+            testCompile junit('params')
+            testRuntime junit('engine')
+        } else {
+            testCompile 'junit:junit:4.12'
+        }
 
         testCompile kotlin('test')
         testCompile kotlin('test-junit')
-        testCompile junit('api')
-        testCompile junit('params')
-        testRuntime junit('engine')
     }
 
     compileKotlin {
         kotlinOptions {
-            jvmTarget = '1.8'
+            jvmTarget = "1.$jdkVersion"
         }
     }
 
     compileTestKotlin {
         kotlinOptions {
-            jvmTarget = '1.8'
+            jvmTarget = "1.$jdkVersion"
         }
     }
 }

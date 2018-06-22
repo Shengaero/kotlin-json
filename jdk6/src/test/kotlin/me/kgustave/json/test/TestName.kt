@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+package me.kgustave.json.test
 
-void module(String name, String path = null) {
-    include name
-    if(path != null) {
-        project(name).projectDir = file(path)
-    }
-}
+// Dummy class
 
-module ':common'
-module ':core'
-module ':js'
-module ':jdk6'
-module ':jdk8'
-module ':reflect'
-module ':ktor-client', '/libraries/ktor/client'
-module ':ktor-common', '/libraries/ktor/common'
-module ':ktor-server', '/libraries/ktor/server'
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+actual annotation class TestName actual constructor(actual val value: String)

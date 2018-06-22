@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-rootProject.name = 'kotlin-json'
+kotlinJvmConfig(true, 6)
+dokkaConfig('JVM')
 
-void module(String name, String path = null) {
-    include name
-    if(path != null) {
-        project(name).projectDir = file(path)
-    }
+dependencies {
+    expectedBy common()
 }
-
-module ':common'
-module ':core'
-module ':js'
-module ':jdk6'
-module ':jdk8'
-module ':reflect'
-module ':ktor-client', '/libraries/ktor/client'
-module ':ktor-common', '/libraries/ktor/common'
-module ':ktor-server', '/libraries/ktor/server'

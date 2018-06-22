@@ -52,7 +52,8 @@ class JsonTests {
         assertEquals(json.obj("inner").array("boo").count { it === null }, 3)
     }
 
-    @Nested inner class `Json Objects` {
+    @DisplayName("Json Objects")
+    @Nested inner class JsonObjects {
         @Test fun `mapOf Style Creation`() {
             val json = jsObjectOf("foo" to "bar", "baz" to 123.4, "biz" to null)
 
@@ -67,7 +68,8 @@ class JsonTests {
             mapOf("key" to type).toJSObject()
         }
 
-        @[Nested SingleInstance] inner class `Mutating Json Objects` {
+        @DisplayName("Mutating Json Objects")
+        @[Nested SingleInstance] inner class MutatingJsonObjects {
             private val json = jsObjectOf()
 
             @RepeatedTest(10, name = SimpleRepeatedTestName)
@@ -100,7 +102,8 @@ class JsonTests {
         }
     }
 
-    @Nested inner class `Json Arrays` {
+    @DisplayName("Json Arrays")
+    @Nested inner class JsonArrays {
         @Test fun `listOf Style Creation`() {
             val json = jsArrayOf("abc", 123, null, "cba")
 
@@ -123,7 +126,8 @@ class JsonTests {
             arrayOf(type).toJSArray()
         }
 
-        @[Nested SingleInstance] inner class `Mutating Json Arrays` {
+        @DisplayName("Mutating Json Arrays")
+        @[Nested SingleInstance] inner class MutatingJsonArrays {
             private val json = jsArrayOf()
 
             @RepeatedTest(10, name = SimpleRepeatedTestName)
@@ -156,7 +160,8 @@ class JsonTests {
         }
     }
 
-    @Nested inner class `Json Writer` {
+    @DisplayName("Json Writer")
+    @Nested inner class JsonWriter {
         @Test fun `Write Json`() {
             JSWriter().obj()
                 .key("foo").value("bar")
@@ -180,7 +185,8 @@ class JsonTests {
         }
     }
 
-    @Nested inner class `Json String Rendering` {
+    @DisplayName("Json String Rendering")
+    @Nested inner class JsonStringRendering {
         @RenderTest fun `Render Map`(info: RepetitionInfo) {
             mapOf("foo" to "bar", "baz" to 1234).toJsonString(info.index)
         }
@@ -213,11 +219,10 @@ class JsonTests {
                 )
             ).toJsonString(info.index)
         }
-
-        private val RepetitionInfo.index get() = currentRepetition - 1
     }
 
-    @[Nested SingleInstance] inner class `Type Safe` {
+    @DisplayName("Type Safe")
+    @[Nested SingleInstance] inner class TypeSafe {
         private val json = JSObject {
             "null" to null
             "int" to 5
@@ -335,6 +340,8 @@ class JsonTests {
             assertFailsWith<JSException> { json.obj("array") }
         }
     }
+
+    private val RepetitionInfo.index get() = currentRepetition - 1
 
     @RepeatedTest(5, name = SimpleRepeatedTestName)
     private annotation class RenderTest
