@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/Shengaero/kotlin-json/issues"
   },
-  "main": "${module_name}.js",
+  "main": "${root_name}.js",
   "files": [
     "**/**/*.kjsm",
     "*.js",
