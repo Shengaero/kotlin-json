@@ -27,7 +27,7 @@ import kotlin.test.assertTrue
  * @author Kaidan Gustave
  */
 class IOTests {
-    private val testResources = "test-resources"
+    private val testResources = "src/test/resources"
 
     @Test fun readJSObjectFromFile() = describe("Read an object from a json file") {
         val json = readJSObject("$testResources/object.json")
