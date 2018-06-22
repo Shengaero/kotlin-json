@@ -13,3 +13,184 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// Had to copy paste earlier build code, this will keep the module
+//consistent for future versions, however this module is deprecated.
+
+apply plugin: 'java-library'
+apply plugin: 'kotlin'
+apply plugin: 'org.jetbrains.dokka'
+apply plugin: 'com.github.johnrengelman.shadow'
+// no tests
+//apply plugin: 'org.junit.platform.gradle.plugin'
+apply plugin: 'com.github.ben-manes.versions'
+
+rootProject.subprojects.each { proj ->
+    String functionName = proj.name.split('-').collect { it.capitalize() }.join('').uncapitalize()
+    project.ext."$functionName" = { proj }
+}
+
+sourceCompatibility = 1.8
+
+ext {
+    moduleName = "$rootProject.name-$project.name"
+
+    repositories {
+        ktorBintray = {
+            maven { url = "https://dl.bintray.com/kotlin/ktor" }
+        }
+    }
+
+    dependencies {
+        kotlin = { String module -> "org.jetbrains.kotlin:kotlin-$module:$kotlin_version" }
+        ktor = { String module -> "io.ktor:ktor-$module:$ktor_version" }
+        junit = { String module -> "org.junit.jupiter:junit-jupiter-$module:$jupiter_version" }
+    }
+}
+
+sourceSets {
+    test.kotlin.srcDirs += 'src/test/kotlin'
+    test.compileClasspath += main.compileClasspath
+    test.runtimeClasspath += main.runtimeClasspath
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compileOnly kotlin('stdlib')
+    compileOnly kotlin('stdlib-jdk8')
+    compileOnly kotlin('stdlib-jdk7')
+
+    testCompile kotlin('stdlib')
+    testCompile kotlin('stdlib-jdk8')
+    testCompile kotlin('stdlib-jdk7')
+    testCompile kotlin('test-junit')
+    testCompile junit('api')
+    testCompile junit('params')
+    testRuntime junit('engine')
+}
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+jar {
+    baseName = "$moduleName"
+    version = version
+    classifier = ''
+    manifest {
+        attributes 'Automatic-Module-Name': "kotlin.json.$project.name",
+                'Implementation-Version': version,
+                'Implementation-Title': "$moduleName"
+    }
+}
+
+dokka {
+    outputFormat = 'html'
+    outputDirectory = "$buildDir/dokka"
+
+    jdkVersion = 8
+    impliedPlatforms = ['JVM']
+
+    noStdlibLink = false
+
+    skipDeprecated = true
+    skipEmptyPackages = true
+
+    reportUndocumented = false
+    includeNonPublic = false
+}
+
+task copySource(type: Copy) {
+    group = 'build'
+    description = 'Copies sources for release to the build directory'
+
+    from { sourceSets.main.allSource }
+    destinationDir = file("$buildDir/sources")
+}
+
+task sourcesJar(type: Jar, dependsOn: copySource) {
+    group = 'build'
+    description = 'Generates a sources jar'
+
+    baseName = "$moduleName"
+    version = version
+    classifier = 'sources'
+    from copySource.destinationDir
+}
+
+task dokkaJar(type: Jar, dependsOn: dokka) {
+    group = 'build'
+    description = 'Generates a dokka-javadoc jar'
+
+    baseName = "$moduleName"
+    version = version
+    classifier = 'javadoc'
+    logging.level = LogLevel.QUIET
+    from dokka.outputDirectory
+}
+
+shadowJar {
+    baseName = "$moduleName"
+    version = version
+    classifier = 'withDependencies'
+}
+
+build {
+    dependsOn clean
+    dependsOn testClasses
+    dependsOn jar
+    dependsOn sourcesJar
+    dependsOn dokkaJar
+    dependsOn shadowJar
+
+    testClasses.mustRunAfter clean
+    jar.mustRunAfter testClasses
+    sourcesJar.mustRunAfter jar
+    dokkaJar.mustRunAfter sourcesJar
+    shadowJar.mustRunAfter dokkaJar
+}
+
+publishing {
+    publications {
+        BintrayRelease(MavenPublication) {
+            groupId = project.group
+            artifactId = moduleName
+            version = project.version
+
+            from project.components.java
+            artifact project.tasks.dokkaJar
+            artifact project.tasks.sourcesJar
+
+            pom.withXml {
+                def repositoriesNode = asNode().appendNode('repositories')
+                def repositoryNode = repositoriesNode.appendNode('repository')
+
+                repositoryNode.appendNode('name', 'bintray')
+                repositoryNode.appendNode('id', 'bintray-kgustave-maven')
+                repositoryNode.appendNode('url', 'https://dl.bintray.com/kgustave/maven')
+
+                def dependingModules = configurations.compile.filter { it instanceof ProjectDependency }
+                if(dependingModules.size() > 0) {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+                    dependingModules.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.dependencyProject.moduleName)
+                        dependencyNode.appendNode('version', it.version)
+                        dependencyNode.appendNode('scope', 'compile')
+                    }
+                }
+            }
+        }
+    }
+}

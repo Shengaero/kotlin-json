@@ -5,7 +5,7 @@
 [license]: https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg
 
 [ ![version][] ][download]
-[ ![license][] ](https://github.com/TheMonitorLizard/kotlin-json/tree/master/LICENSE)
+[ ![license][] ](https://github.com/Shengaero/kotlin-json/tree/master/LICENSE)
 
 [ ![Discord][discord-widget] ][discord]
 
@@ -183,10 +183,10 @@ repositories {
 }
 
 dependencies {
-    compile "me.kgustave:kotlin-json-core:1.5.0"
+    compile "me.kgustave:kotlin-json:${kotlin_json_version}"
 
     // for reflection support add this
-    compile "me.kgustave:kotlin-json-reflect:1.5.0"
+    compile "me.kgustave:kotlin-json-reflect:${kotlin_json_version}"
 }
 ```
 
@@ -205,8 +205,8 @@ dependencies {
 <dependencies>
   <dependency>
     <groupId>me.kgustave</groupId>
-    <artifactId>kotlin-json-core</artifactId>
-    <version>1.5.0</version>
+    <artifactId>kotlin-json</artifactId>
+    <version>${kotlin_json_version}</version>
     <type>pom</type>
   </dependency>
 
@@ -214,14 +214,14 @@ dependencies {
   <dependency>
     <groupId>me.kgustave</groupId>
     <artifactId>kotlin-json-reflect</artifactId>
-    <version>1.5.0</version>
+    <version>${kotlin_json_version}</version>
   </dependency>
 </dependencies>
 ```
 
 ## License
 
-kotlin-json is licensed under the Apache 2.0 License
+kotlin-json is licensed under the [Apache 2.0 License](https://github.com/Shengaero/kotlin-json/tree/master/LICENSE)
 
 ```
 Copyright 2018 Kaidan Gustave

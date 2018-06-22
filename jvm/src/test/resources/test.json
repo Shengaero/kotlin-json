@@ -1,0 +1,16 @@
+{
+  "name": "Kaidan Gustave",
+  "github": "TheMonitorLizard",
+  "repositories": [
+    {
+      "name": "kotlin-json",
+      "languages": [
+        {
+          "name": "Kotlin",
+          "composition": 100.0
+        }
+      ],
+      "description": "A lightweight JavaScript Object Notation (JSON) library for Kotlin JVM."
+    }
+  ]
+}

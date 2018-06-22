@@ -20,6 +20,7 @@ buildscript {
         dokka_version = '0.9.17'
         junit_version = '1.0.1'
         jupiter_version = '5.0.1'
+        node_plugin_version = '1.2.0'
         shadow_version = '2.0.1'
         versions_version = '0.17.0'
         bintray_version = '1.7.3'
@@ -27,6 +28,7 @@ buildscript {
 
     repositories {
         jcenter()
+        maven { url = "https://plugins.gradle.org/m2/" }
     }
     
     dependencies {
@@ -34,13 +36,13 @@ buildscript {
         classpath "org.jetbrains.dokka:dokka-gradle-plugin:$dokka_version"
         classpath "org.junit.platform:junit-platform-gradle-plugin:$junit_version"
         classpath "com.github.jengelman.gradle.plugins:shadow:$shadow_version"
+        classpath "com.moowork.gradle:gradle-node-plugin:$node_plugin_version"
         classpath "com.github.ben-manes:gradle-versions-plugin:$versions_version"
         classpath "com.jfrog.bintray.gradle:gradle-bintray-plugin:$bintray_version"
     }
 }
 
-def versionObj = [major: 1, minor: 6, revision: 0]
-def versionStr = versionObj.values().join('.')
+def versionObj = [major: 1, minor: 7, revision: 0]
 
 allprojects {
     apply plugin: 'idea'
@@ -48,7 +50,14 @@ allprojects {
     apply plugin: 'com.jfrog.bintray'
 
     group = 'me.kgustave'
-    version = versionStr
+    version = versionObj.values().join('.')
+
+    rootProject.subprojects.each { proj ->
+        if(proj != rootProject) {
+            String functionName = proj.name.split('-').collect { it.capitalize() }.join('').uncapitalize()
+            project.ext."$functionName" = { proj }
+        }
+    }
 
     bintray {
         user = bintrayUsername
@@ -72,17 +81,15 @@ allprojects {
 }
 
 subprojects {
-    def moduleName = "$rootProject.name-$project.name"
+    // Deprecated modules are fully configured individually
+    //in order to maintain backwards compatibility.
+    if(project.hasProperty('deprecated') && project.deprecated) return
 
     apply plugin: 'java-library'
-    apply plugin: 'kotlin'
-    apply plugin: 'org.jetbrains.dokka'
-    apply plugin: 'com.github.johnrengelman.shadow'
-    apply plugin: 'org.junit.platform.gradle.plugin'
     apply plugin: 'com.github.ben-manes.versions'
 
     ext {
-        kotlinJvmTarget = '1.8'
+        moduleName = "$rootProject.name-$project.name"
         useExperimental = { String exp -> "-Xuse-experimental=$exp" }
 
         repositories {
@@ -98,124 +105,45 @@ subprojects {
         }
     }
 
-    rootProject.subprojects.each { proj ->
-        String functionName = proj.name.split('-').collect { it.capitalize() }.join('').uncapitalize()
-        project.ext."$functionName" = { proj }
-    }
+    apply from: "$rootProject.projectDir/config/kotlin-common.gradle"
+    apply from: "$rootProject.projectDir/config/kotlin-jvm.gradle"
+    apply from: "$rootProject.projectDir/config/kotlin2js.gradle"
+    apply from: "$rootProject.projectDir/config/dokka.gradle"
 
-    sourceCompatibility = 1.8
-
-    sourceSets {
-        test.kotlin.srcDirs += 'src/test/kotlin'
-        test.compileClasspath += main.compileClasspath
-        test.runtimeClasspath += main.runtimeClasspath
-    }
+    setProperty('archivesBaseName', moduleName)
 
     repositories {
         jcenter()
     }
 
-    dependencies {
-        compileOnly kotlin('stdlib')
-        compileOnly kotlin('stdlib-jdk8')
-        compileOnly kotlin('stdlib-jdk7')
-
-        testCompile kotlin('stdlib')
-        testCompile kotlin('stdlib-jdk8')
-        testCompile kotlin('stdlib-jdk7')
-        testCompile kotlin('test-junit')
-        testCompile junit('api')
-        testCompile junit('params')
-        testRuntime junit('engine')
-    }
-
-    compileKotlin {
-        kotlinOptions {
-            jvmTarget = kotlinJvmTarget
-        }
-    }
-
-    compileTestKotlin {
-        kotlinOptions {
-            jvmTarget = kotlinJvmTarget
-        }
-    }
-
     jar {
         baseName = "$moduleName"
-        version = versionStr
+        version = "$version"
         classifier = ''
         manifest {
             attributes 'Automatic-Module-Name': "kotlin.json.$project.name",
-                       'Implementation-Version': versionStr,
+                       'Implementation-Version': "$version",
                        'Implementation-Title': "$moduleName"
         }
     }
 
-    dokka {
-        outputFormat = 'html'
-        outputDirectory = "$buildDir/dokka"
-
-        jdkVersion = 8
-        impliedPlatforms = ['JVM']
-
-        noStdlibLink = false
-
-        skipDeprecated = true
-        skipEmptyPackages = true
-
-        reportUndocumented = false
-        includeNonPublic = false
-    }
-
-    task copySource(type: Copy) {
-        group = 'build'
-        description = 'Copies sources for release to the build directory'
-
-        from { sourceSets.main.allSource }
-        destinationDir = file("$buildDir/sources")
-    }
-
-    task sourcesJar(type: Jar, dependsOn: copySource) {
+    task sourcesJar(type: Jar) {
         group = 'build'
         description = 'Generates a sources jar'
 
         baseName = "$moduleName"
-        version = versionStr
+        version = "$project.version"
         classifier = 'sources'
-        from copySource.destinationDir
-    }
-
-    task dokkaJar(type: Jar, dependsOn: dokka) {
-        group = 'build'
-        description = 'Generates a dokka-javadoc jar'
-
-        baseName = "$moduleName"
-        version = versionStr
-        classifier = 'javadoc'
-        logging.level = LogLevel.QUIET
-        from dokka.outputDirectory
-    }
-
-    shadowJar {
-        baseName = "$moduleName"
-        version = versionStr
-        classifier = 'withDependencies'
+        from { sourceSets.main.allSource }
     }
 
     build {
         dependsOn clean
-        dependsOn testClasses
         dependsOn jar
         dependsOn sourcesJar
-        dependsOn dokkaJar
-        dependsOn shadowJar
 
-        testClasses.mustRunAfter clean
-        jar.mustRunAfter testClasses
+        jar.mustRunAfter clean
         sourcesJar.mustRunAfter jar
-        dokkaJar.mustRunAfter sourcesJar
-        shadowJar.mustRunAfter dokkaJar
     }
 
     publishing {
@@ -226,7 +154,9 @@ subprojects {
                 version = project.version
 
                 from project.components.java
-                artifact project.tasks.dokkaJar
+                if(!project.getTasksByName('dokkaJar', false).isEmpty()) {
+                    artifact project.tasks.dokkaJar
+                }
                 artifact project.tasks.sourcesJar
 
                 pom.withXml {
@@ -263,7 +193,12 @@ task uploadAll {
     description = 'Publishes all modules.'
 
     rootProject.childProjects.values().each {
-        dependsOn it.getTasksByName('bintrayUpload', true).first()
+        it.getTasksByName('bintrayUpload', true).each {
+            dependsOn it
+        }
+        it.getTasksByName('npm_publish', true).each {
+            dependsOn it
+        }
     }
     dependsOn bintrayUpload
 }
@@ -284,10 +219,10 @@ publishing {
 
                 def dependenciesNode = asNode().appendNode('dependencies')
                 def dependencyNode = dependenciesNode.appendNode('dependency')
-                def core = project(":core")
+                def core = jvm()
 
                 dependencyNode.appendNode('groupId', core.group)
-                dependencyNode.appendNode('artifactId', 'kotlin-json-core')
+                dependencyNode.appendNode('artifactId', core.moduleName)
                 dependencyNode.appendNode('version', core.version)
                 dependencyNode.appendNode('scope', 'compile')
             }

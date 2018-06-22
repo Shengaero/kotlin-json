@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+kotlinJvmConfig()
+dokkaConfig()
+
 repositories {
     ktorBintray()
 }
@@ -20,7 +23,7 @@ repositories {
 dependencies {
     compileOnly ktor('server-core')
     compileOnly ktor('http-cio')
-    compile core()
+    compile jvm()
     compile reflect()
     compile ktorCommon()
 

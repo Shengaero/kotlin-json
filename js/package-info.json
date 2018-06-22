@@ -1,0 +1,32 @@
+{
+  "name": "$root_name",
+  "version": "$kotlin_json_version",
+  "description": "A lightweight, highly stylized JavaScript Object Notation (JSON) for The Kotlin Programming Language.",
+  "author": "Kaidan Gustave",
+  "license": "Apache-2.0",
+  "keywords": [
+    "kotlin", "kotlin2js", "json", "kotlin-json",
+    "dsl", "kotlin2js", "shengaero", "kgustave"
+  ],
+  "homepage": "https://github.com/Shengaero/kotlin-json#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shengaero/kotlin-json"
+  },
+  "bugs": {
+    "url": "https://github.com/Shengaero/kotlin-json/issues"
+  },
+  "main": "${root_name}.js",
+  "files": [
+    "**/**/*.kjsm",
+    "*.js",
+    "*.js.map",
+    "*.meta.js",
+    "LICENSE",
+    "package.json",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "kotlin": "^1.2.50"
+  }
+}

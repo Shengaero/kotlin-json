@@ -1,0 +1,165 @@
+/*
+ * Copyright 2018 Kaidan Gustave
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+def pkgInfo = 'package-info.json'
+def npmBuildDir = 'build/npm'
+
+project.ext.kotlinJsConfig = { boolean common = false ->
+    apply plugin: !common ? 'kotlin2js' : 'kotlin-platform-js'
+    apply plugin: 'com.moowork.node'
+
+    repositories {
+        maven { url = "https://kotlin.bintray.com/kotlin-js-wrappers" }
+    }
+
+    dependencies {
+        compileOnly kotlin('stdlib-js')
+        testCompile kotlin('test-js')
+    }
+
+    [compileKotlin2Js, compileTestKotlin2Js]*.configure {
+        kotlinOptions {
+            main = 'noCall'
+            moduleKind = 'umd'
+            noStdlib = true
+            metaInfo = true
+            typedArrays = true
+            sourceMap = true
+            sourceMapEmbedSources = 'always'
+        }
+    }
+
+    node {
+        download = false
+        npmWorkDir = file("${project.buildDir}/npm")
+    }
+
+    task installDeps(type: NpmTask) {
+        group = 'npm'
+        args = ['install', '--save-dev', 'mocha', 'kotlin']
+    }
+
+    task copyReadme(type: Copy) {
+        group = 'npm'
+        into npmBuildDir
+        from project.file('README.md').exists() ? project.projectDir : rootProject.projectDir
+        include 'README.md'
+    }
+
+    task copyLicense(type: Copy) {
+        group = 'npm'
+        into npmBuildDir
+        from rootProject.projectDir
+        include 'LICENSE'
+    }
+
+    task processPkg(type: Copy) {
+        group = 'npm'
+        from '.'
+        into '.'
+        include pkgInfo
+
+        def expands = [
+                kotlin_version: "$kotlin_version",
+                kotlin_json_version: "$version",
+                root_name: "${rootProject.name}",
+                module_name: "$moduleName"
+        ]
+
+        expand(expands)
+        rename {
+            if(it.endsWith(pkgInfo)) {
+                def file = file("$project.projectDir/package.json")
+                if(!file.exists() && !file.createNewFile()) {
+                    throw new IOException("Failed to remove old package.json file!")
+                }
+                return 'package.json'
+            }
+            return it
+        }
+    }
+
+    task processBuildPkg(type: Copy, dependsOn: [processPkg, copyReadme, copyLicense]) {
+        group = 'npm'
+        from processPkg.destinationDir
+        into npmBuildDir
+        include 'package.json'
+    }
+
+    task prepublish(type: Copy, dependsOn: [installDeps, processBuildPkg, compileKotlin2Js]) {
+        group = 'npm'
+        from 'build/classes/kotlin/main'
+        into npmBuildDir
+    }
+
+    task runMocha(type: NodeTask, dependsOn: [compileTestKotlin2Js, installDeps]) {
+        script = file('node_modules/mocha/bin/mocha')
+        args = [compileTestKotlin2Js.outputFile]
+    }
+
+    npmInstall {
+        dependsOn installDeps
+        execOverrides {
+            it.workingDir = npmBuildDir
+        }
+    }
+
+    npm_publish {
+        group = 'publishing'
+
+        dependsOn build
+
+        args = ['--access', 'public']
+        execOverrides {
+            it.workingDir = npmBuildDir
+        }
+    }
+
+    test {
+        dependsOn runMocha
+    }
+
+    build {
+        dependsOn processBuildPkg
+        dependsOn prepublish
+    }
+}
+
+project.ext.install = { dependency, dev = false ->
+    //noinspection GroovyAssignabilityCheck
+    tasks.create("npmInstall$dependency", NpmTask) {
+        group = 'npm'
+        description = "Installs $dependency"
+        def a = ['install', dependency]
+        if(dev) a.add('--save-dev')
+        args = a
+    }
+}
+
+project.ext.populateModules = {
+    task populateNodeModules(type: Copy, dependsOn: compileKotlin2Js) {
+        from compileKotlin2Js.destinationDir
+
+        configurations.testCompile.each {
+            from zipTree(it.absolutePath).matching { include '*.js' }
+        }
+
+        into "${buildDir}/node_modules"
+    }
+
+    runMocha {
+        dependsOn populateNodeModules
+    }
+}
