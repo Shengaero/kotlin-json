@@ -23,7 +23,7 @@ repositories {
 dependencies {
     compileOnly ktor('server-core')
     compileOnly ktor('http-cio')
-    compile jvm()
+    compile jdk8()
     compile reflect()
     compile ktorCommon()
 

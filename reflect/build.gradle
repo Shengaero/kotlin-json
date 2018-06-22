@@ -18,7 +18,7 @@ dokkaConfig()
 
 dependencies {
     compileOnly kotlin('reflect')
-    compile jvm()
+    compile jdk8()
 }
 
 def compilerArgs = [

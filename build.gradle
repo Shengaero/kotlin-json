@@ -219,7 +219,7 @@ publishing {
 
                 def dependenciesNode = asNode().appendNode('dependencies')
                 def dependencyNode = dependenciesNode.appendNode('dependency')
-                def core = jvm()
+                def core = jdk8()
 
                 dependencyNode.appendNode('groupId', core.group)
                 dependencyNode.appendNode('artifactId', core.moduleName)

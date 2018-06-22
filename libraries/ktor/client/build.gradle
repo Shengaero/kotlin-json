@@ -24,7 +24,7 @@ dependencies {
     compileOnly ktor('client-core')
     compileOnly ktor('client-websocket')
     compileOnly ktor('client-json')
-    compile jvm()
+    compile jdk8()
     compile reflect()
     compile ktorCommon()
 
