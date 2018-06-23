@@ -52,16 +52,21 @@ allprojects {
     group = 'me.kgustave'
     version = versionObj.values().join('.')
 
-    rootProject.subprojects.each { proj ->
-        if(proj != rootProject) {
-            String functionName = proj.name.split('-').collect { it.capitalize() }.join('').uncapitalize()
-            project.ext."$functionName" = { proj }
+    rootProject.subprojects.each { p ->
+        if(p != rootProject) {
+            String functionName = p.name.split('-').collect { it.capitalize() }.join('').uncapitalize()
+            project.ext."$functionName" = { p }
         }
     }
 
     bintray {
-        user = bintrayUsername
-        key = bintrayApiKey
+        def keysFile = rootProject.file("keys/keys.properties")
+        if(keysFile.exists()) {
+            def keys = new Properties()
+            keysFile.withReader { keys.load(it) }
+            user = keys['bintray.user.name']
+            key = keys['bintray.api.key']
+        }
 
         publications = ['BintrayRelease']
         publish = true
