@@ -51,6 +51,7 @@ actual fun jsArrayOf(vararg items: Any?): JSArray = JSArrayImpl(items)
  *
  * @return A [JSObject] created from the [Map].
  */
+@JsName("fromMap")
 actual fun Map<String, *>.toJSObject(): JSObject {
     return this.mapValuesTo(JSObjectImpl()) { containsValue(it.value) }
 }
@@ -62,6 +63,7 @@ actual fun Map<String, *>.toJSObject(): JSObject {
  *
  * @return A [JSArray] created from the [Collection].
  */
+@JsName("fromCollection")
 actual fun Collection<*>.toJSArray(): JSArray {
     return this.mapTo(JSArrayImpl()) { it }
 }
@@ -73,6 +75,7 @@ actual fun Collection<*>.toJSArray(): JSArray {
  *
  * @return A [JSArray] created from the [List].
  */
+@JsName("fromList")
 actual fun List<*>.toJSArray(): JSArray {
     return (this as Collection<*>).toJSArray()
 }
@@ -84,8 +87,21 @@ actual fun List<*>.toJSArray(): JSArray {
  *
  * @return A [JSArray] created from the [Array].
  */
+@JsName("fromArray")
 actual fun Array<*>.toJSArray(): JSArray {
     return JSArrayImpl(this)
+}
+
+/**
+ * Produces a [JSArray] from the receiver [Sequence].
+ *
+ * @receiver The [Sequence] to create a [JSArray] with.
+ *
+ * @return A [JSArray] created from the [Sequence].
+ */
+@JsName("fromSequence")
+actual fun Sequence<*>.toJSArray(): JSArray {
+    return this.toCollection(JSArrayImpl())
 }
 
 // Rendering
@@ -122,6 +138,17 @@ actual fun List<*>.toJsonString(indent: Int): String = buildJsonArrayString(inde
  */
 @JsName("stringifyArray")
 actual fun Array<*>.toJsonString(indent: Int): String = buildJsonArrayString(indent)
+
+/**
+ * Renders the receiver [Sequence] to a JSON Array string
+ * with an optional [indent] factor.
+ *
+ * @param indent The indent factor, default 0.
+ *
+ * @return The rendered JSON Array string.
+ */
+@JsName("stringifySequence")
+actual fun Sequence<*>.toJsonString(indent: Int): String = buildJsonArrayString(indent)
 
 // Parsing
 

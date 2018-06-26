@@ -199,6 +199,10 @@ class JsonTests {
             arrayOf("hello", "world", null).toJsonString(info.index)
         }
 
+        @RenderTest fun `Render Sequence`(info: RepetitionInfo) {
+            sequenceOf(1, 2, 3).map { it * 2 }.map { "$it" }.toJsonString(info.index)
+        }
+
         @RenderTest fun `Render Map With Inner List`(info: RepetitionInfo) {
             mapOf(
                 "a" to listOf(1, 2),

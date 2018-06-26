@@ -15,7 +15,6 @@
  */
 package me.kgustave.json
 
-
 /**
  * Creates a [JSObject] from the receiver [Map].
  *
@@ -51,3 +50,12 @@ expect fun List<*>.toJSArray(): JSArray
  * @return A [JSArray] created from the [Array].
  */
 expect fun Array<*>.toJSArray(): JSArray
+
+/**
+ * Creates a [JSArray] from the receiver [Sequence].
+ *
+ * @receiver The [Sequence] to create a [JSArray] with.
+ *
+ * @return A [JSArray] created from the [Sequence].
+ */
+expect fun Sequence<*>.toJSArray(): JSArray

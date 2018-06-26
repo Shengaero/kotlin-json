@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+@file:Suppress("MemberVisibilityCanBePrivate")
 
 package me.kgustave.json.internal
 
@@ -22,18 +22,8 @@ import java.io.IOException
 import java.io.Reader
 
 class JSTokener(reader: Reader): AutoCloseable {
-    internal companion object {
-        internal const val NCHAR = 0.toChar()
-
-        private fun dehexchar(c: Char) = when(c) {
-            in '0'..'9' -> c - '0'
-            in 'A'..'F' -> c.toInt() - ('A'.toInt() - 10)
-            in 'a'..'f' -> c.toInt() - ('a'.toInt() - 10)
-            else -> -1
-        }
-
-        private val readInnerJSObject: JSTokener.() -> Any? = { JSObjectImpl(this) }
-        private val readInnerJSArray: JSTokener.() -> Any? = { JSArrayImpl(this) }
+    companion object {
+        const val NCHAR = 0.toChar()
     }
 
     constructor(string: String): this(string.reader())
@@ -126,22 +116,19 @@ class JSTokener(reader: Reader): AutoCloseable {
         return key
     }
 
-    @Throws(IOException::class) fun nextValue(
-        readInnerObject: JSTokener.() -> Any? = readInnerJSObject,
-        readInnerArray: JSTokener.() -> Any? = readInnerJSArray
-    ): Any? {
+    @Throws(IOException::class) fun nextValue(): Any? {
         var c = nextSymbol()
         when(c) {
             '"', '\'' -> return nextString(c)
 
             '{' -> {
                 prev()
-                return this.readInnerObject()
+                return JSObjectImpl(this)
             }
 
             '[' -> {
                 prev()
-                return this.readInnerArray()
+                return JSArrayImpl(this)
             }
         }
         val string = buildString {
@@ -155,7 +142,7 @@ class JSTokener(reader: Reader): AutoCloseable {
         return stringToValue(string)
     }
 
-    @Throws(IOException::class) fun nextTo(delimiter: Char): String = buildString str@ {
+    @Throws(IOException::class) fun nextTo(delimiter: Char): String = buildString {
         var c: Char
         while(true) {
             c = next()
@@ -168,7 +155,7 @@ class JSTokener(reader: Reader): AutoCloseable {
         }
     }.trim()
 
-    @Throws(IOException::class) fun nextTo(delimiters: String): String = buildString str@ {
+    @Throws(IOException::class) fun nextTo(delimiters: String): String = buildString {
         var c: Char
         while(true) {
             c = next()
@@ -246,6 +233,24 @@ class JSTokener(reader: Reader): AutoCloseable {
 
     fun syntaxError(msg: String, cause: Throwable? = null): Nothing =
         throw JSSyntaxException("$msg $this", cause)
+
+    fun expectedObjectStart(): Nothing =
+        syntaxError("A JSObject text must begin with '{'")
+
+    fun expectedObjectEnd(): Nothing =
+        syntaxError("A JSObject text must end with '}'")
+
+    fun expectedArrayStart(): Nothing =
+        syntaxError("A JSArray text must start with '['")
+
+    fun expectedArrayEnd(): Nothing =
+        syntaxError("A JSObject text must end with '}'")
+
+    fun expectedCommaOrObjectEnd(): Nothing =
+        syntaxError("Expected a ',' or '}'")
+
+    fun expectedCommaOrArrayEnd(): Nothing =
+        syntaxError("Expected a ',' or ']'")
 
     override fun close() {
         reader.close()

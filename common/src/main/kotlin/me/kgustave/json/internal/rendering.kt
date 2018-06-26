@@ -139,6 +139,49 @@ internal fun Array<*>.buildJsonArrayString(
     append(']')
 }
 
+internal fun Sequence<*>.buildJsonArrayString(
+    indent: Int,
+    level: Int = 0,
+    newline: Boolean = false
+): String = buildString {
+    val printPretty = indent > 0
+    if(printPretty && level > 0 && newline) {
+        append('\n')
+        indent(indent, level)
+    }
+
+    append('[')
+    var first = true
+    this@buildJsonArrayString.forEach { v ->
+        if(!first) {
+            append(',')
+        } else {
+            first = false
+        }
+        if(valueCheckToNewline(v, indent)) {
+            append('\n')
+        }
+        if(printPretty) {
+            indent(indent, level + 1)
+        }
+
+        val converted = renderValue(v, indent, level, true)
+
+        if(v is String) {
+            renderString(converted)
+        } else {
+            append(converted)
+        }
+    }
+    if(printPretty) {
+        append('\n')
+        if(level > 0) {
+            indent(indent, level)
+        }
+    }
+    append(']')
+}
+
 internal fun escape(str: String): String = buildString {
     for(c in str) {
         when(c) {

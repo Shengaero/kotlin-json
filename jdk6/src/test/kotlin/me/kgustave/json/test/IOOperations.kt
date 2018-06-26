@@ -18,11 +18,13 @@ package me.kgustave.json.test
 import me.kgustave.json.JSObject
 import me.kgustave.json.exceptions.JSSyntaxException
 import me.kgustave.json.readJSObject
+import org.junit.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
+@Ignore
 class IOOperations {
     @Test fun `Read JSObject From Resource`() {
         val url = checkNotNull(this::class.java.getResource("/test.json"))

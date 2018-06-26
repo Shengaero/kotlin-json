@@ -21,7 +21,7 @@ internal actual class JSObjectImpl: AbstractJSObject {
     actual constructor(vararg pairs: Pair<String, *>): this() { putAll(pairs) }
     constructor(tokener: JSTokener): this() {
         if(tokener.nextSymbol() != '{') {
-            tokener.syntaxError("A JSObject text must begin with '{'")
+            tokener.expectedObjectStart()
         }
 
         var c: Char
@@ -30,7 +30,7 @@ internal actual class JSObjectImpl: AbstractJSObject {
 
             when(c) {
                 JSTokener.NCHAR -> {
-                    tokener.syntaxError("A JSObject text must end with '}'")
+                    tokener.expectedObjectEnd()
                 }
 
                 '}' -> return
@@ -39,14 +39,14 @@ internal actual class JSObjectImpl: AbstractJSObject {
             val key = tokener.nextKey()
             map[key] = tokener.nextValue()
             when(tokener.nextSymbol()) {
-                ';', ',' -> {
+                ',' -> {
                     if(tokener.nextSymbol() == '}') return
                     tokener.prev()
                 }
 
                 '}' -> return
 
-                else -> tokener.syntaxError("Expected a ',' or '}'")
+                else -> tokener.expectedCommaOrObjectEnd()
             }
         }
     }

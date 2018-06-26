@@ -24,29 +24,27 @@ internal actual class JSArrayImpl: AbstractJSArray {
     actual constructor(collection: Collection<*>): this() { addAll(collection) }
     constructor(tokener: JSTokener): this() {
         if(tokener.nextSymbol() != '[') {
-            tokener.syntaxError("A JSArray text must start with '['")
+            tokener.expectedArrayStart()
         }
-        if(tokener.nextSymbol() != ']') {
+
+        var c: Char
+        while(true) {
+            c = tokener.nextSymbol()
+            when(c) {
+                JSTokener.NCHAR -> tokener.expectedArrayEnd()
+                ']' -> return
+            }
             tokener.prev()
-            while(true) {
-                if(tokener.nextSymbol() == ',') {
+            list += tokener.nextValue()
+            when(tokener.nextSymbol()) {
+                ',' -> {
+                    if(tokener.nextSymbol() == ']') return
                     tokener.prev()
-                    list.add(null)
-                } else {
-                    tokener.prev()
-                    list.add(tokener.nextValue())
                 }
 
-                when(tokener.nextSymbol()) {
-                    ',' -> {
-                        if(tokener.nextSymbol() == ']') {
-                            return
-                        }
-                        tokener.prev()
-                    }
-                    ']' -> return
-                    else -> tokener.syntaxError("Expected a ',' or ']'")
-                }
+                '}' -> return
+
+                else -> tokener.expectedCommaOrArrayEnd()
             }
         }
     }

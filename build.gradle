@@ -42,7 +42,7 @@ buildscript {
     }
 }
 
-def versionObj = [major: 1, minor: 7, revision: 0]
+def versionObj = [major: 1, minor: 7, revision: 1]
 
 allprojects {
     apply plugin: 'idea'

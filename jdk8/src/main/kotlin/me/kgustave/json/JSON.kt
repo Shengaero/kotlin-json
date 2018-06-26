@@ -98,6 +98,18 @@ actual fun Array<*>.toJSArray(): JSArray {
     return JSArrayImpl(this)
 }
 
+/**
+ * Produces a [JSArray] from the receiver [Sequence].
+ *
+ * @receiver The [Sequence] to create a [JSArray] with.
+ *
+ * @return A [JSArray] created from the [Sequence].
+ */
+@JvmName("array")
+actual fun Sequence<*>.toJSArray(): JSArray {
+    return this.toCollection(JSArrayImpl())
+}
+
 // Rendering
 
 /**
@@ -132,6 +144,17 @@ actual fun Array<*>.toJSArray(): JSArray {
  */
 @JvmName("stringify")
 @JvmOverloads actual fun Array<*>.toJsonString(indent: Int): String = buildJsonArrayString(indent)
+
+/**
+ * Renders the receiver [Sequence] to a JSON Array string
+ * with an optional [indent] factor.
+ *
+ * @param indent The indent factor, default 0.
+ *
+ * @return The rendered JSON Array string.
+ */
+@JvmName("stringify")
+@JvmOverloads actual fun Sequence<*>.toJsonString(indent: Int): String = buildJsonArrayString(indent)
 
 // Parsing
 

@@ -44,3 +44,13 @@ expect fun List<*>.toJsonString(indent: Int = 0): String
  * @return The rendered JSON Array string.
  */
 expect fun Array<*>.toJsonString(indent: Int = 0): String
+
+/**
+ * Renders the receiver [Sequence] to a JSON Array string
+ * with an optional [indent] factor.
+ *
+ * @param indent The indent factor, default 0.
+ *
+ * @return The rendered JSON Array string.
+ */
+expect fun Sequence<*>.toJsonString(indent: Int = 0): String
