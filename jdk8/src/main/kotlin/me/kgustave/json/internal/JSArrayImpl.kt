@@ -42,7 +42,7 @@ internal actual class JSArrayImpl: AbstractJSArray {
                     tokener.prev()
                 }
 
-                '}' -> return
+                ']' -> return
 
                 else -> tokener.expectedCommaOrArrayEnd()
             }

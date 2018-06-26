@@ -42,7 +42,7 @@ buildscript {
     }
 }
 
-def versionObj = [major: 1, minor: 7, revision: 1]
+def versionObj = [major: 1, minor: 7, revision: 2]
 
 allprojects {
     apply plugin: 'idea'
@@ -199,9 +199,6 @@ task uploadAll {
 
     rootProject.childProjects.values().each {
         it.getTasksByName('bintrayUpload', true).each {
-            dependsOn it
-        }
-        it.getTasksByName('npm_publish', true).each {
             dependsOn it
         }
     }
