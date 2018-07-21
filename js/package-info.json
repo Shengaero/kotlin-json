@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "keywords": [
     "kotlin", "kotlin2js", "json", "kotlin-json",
-    "dsl", "kotlin2js", "shengaero", "kgustave"
+    "dsl", "shengaero", "kgustave"
   ],
   "homepage": "https://github.com/Shengaero/kotlin-json#readme",
   "repository": {
@@ -27,6 +27,6 @@
     "README.md"
   ],
   "peerDependencies": {
-    "kotlin": "^1.2.50"
+    "kotlin": "^$kotlin_version"
   }
 }

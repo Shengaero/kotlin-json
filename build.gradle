@@ -15,8 +15,8 @@
  */
 buildscript {
     ext {
-        kotlin_version = '1.2.50'
-        ktor_version = '0.9.3-alpha-3'
+        kotlin_version = '1.2.51'
+        ktor_version = '0.9.3'
         dokka_version = '0.9.17'
         junit_version = '1.0.1'
         jupiter_version = '5.0.1'

@@ -5,6 +5,7 @@
 
 [ ![npm][] ](https://www.npmjs.com/package/kotlin-json)
 [ ![license][] ](https://github.com/Shengaero/kotlin-json/tree/master/LICENSE)
+[ ![Awesome Kotlin](https://kotlin.link/awesome-kotlin.svg) ](https://github.com/KotlinBy/awesome-kotlin)
 
 [ ![Discord][discord-widget] ][discord]
 
